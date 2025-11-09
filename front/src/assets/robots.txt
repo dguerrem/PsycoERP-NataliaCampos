@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+//TODO:Cambiar al que toca
+Sitemap: https://.com/sitemap.xml

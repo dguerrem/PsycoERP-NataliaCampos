@@ -141,7 +141,6 @@ const getEntidad = async (filters = {}) => {
 
 ## Módulos del Sistema
 Todavía faltan nuevos módulos pero de momento estos son los principales:
-- **Dashboard**: KPIs, gráficos (sesiones, ingresos, pacientes activos)
 - **Calendar**: Gestión citas con colores por clínica
 - **Patients**: 6 tabs (resumen, datos, historia, sesiones, facturas, bonos), se añadirá uno nuevo futuramente.
 - **Sessions**: Filtros avanzados, estados múltiples

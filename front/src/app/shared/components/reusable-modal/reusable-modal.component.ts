@@ -16,6 +16,7 @@ export class ReusableModalComponent {
   @Input() isFormValid: boolean = false;
   @Input() showFormStatus: boolean = true;
   @Input() actionType: 'create' | 'edit' = 'create'; // Nuevo input para determinar el icono
+  @Input() modalType: 'session' | 'call' = 'session'; // New input to determine icon type
   @Input() cancelButtonText: string | null = null; // New input for cancel session button
   @Input() deleteButtonText: string | null = null; // New input for delete session button
   @Input() isCancelled: boolean = false; // New input to show cancelled status

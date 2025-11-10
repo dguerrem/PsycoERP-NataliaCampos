@@ -18,6 +18,7 @@ import {
 } from '../../shared/models/clinic-config.model';
 import { CalendarService } from './services/calendar.service';
 import { NewSessionFormComponent } from './components/new-sesion-dialog/new-session-form.component';
+import { NewCallDialogComponent, CallData } from './components/new-call-dialog/new-call-dialog.component';
 
 /**
  * Representa un fragmento de sesión dentro de un slot horario específico
@@ -42,7 +43,7 @@ interface SessionLayout extends SessionFragment {
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, NewSessionFormComponent],
+  imports: [CommonModule, NewSessionFormComponent, NewCallDialogComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +69,7 @@ export class CalendarComponent implements OnInit {
 
   readonly showSessionPopup = signal(false);
   readonly showNewSessionDialog = signal(false);
+  readonly showNewCallDialog = signal(false);
   readonly showReminderConfirmModal = signal(false);
   readonly pendingReminderSession = signal<SessionData | null>(null);
   readonly clinicConfigs = CLINIC_CONFIGS;
@@ -82,6 +84,9 @@ export class CalendarComponent implements OnInit {
     startTime: string | null;
     sessionData?: SessionData;
   } | null = null;
+
+  // Data to prefill when creating new call from calendar
+  prefilledCallData: Partial<CallData> | null = null;
 
   readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   readonly monthNames = [
@@ -183,6 +188,28 @@ export class CalendarComponent implements OnInit {
     this.showNewSessionDialog.set(true);
   }
 
+  onNewCallClick(): void {
+    this.prefilledCallData = null;
+    this.showNewCallDialog.set(true);
+  }
+
+  onNewCallClickForDateTime(date: Date, hour: string): void {
+    // Pre-fill the form with the selected date and hour
+    this.prefilledCallData = {
+      sessionDate: this.formatDateForInput(date),
+      startTime: hour,
+    };
+    this.showNewCallDialog.set(true);
+  }
+
+  onNewCallClickForDate(date: Date): void {
+    // Pre-fill the form with the selected date
+    this.prefilledCallData = {
+      sessionDate: this.formatDateForInput(date),
+    };
+    this.showNewCallDialog.set(true);
+  }
+
   onNewSessionClickForDateTime(date: Date, hour: string): void {
     // Pre-fill the form with the selected date and hour
     this.prefilledSessionData = {
@@ -219,6 +246,11 @@ export class CalendarComponent implements OnInit {
     this.prefilledSessionData = null;
   }
 
+  onCloseNewCallDialog(): void {
+    this.showNewCallDialog.set(false);
+    this.prefilledCallData = null;
+  }
+
   onSessionDataCreated(sessionData: SessionData): void {
     this.showNewSessionDialog.set(false);
     this.prefilledSessionData = null;
@@ -227,6 +259,17 @@ export class CalendarComponent implements OnInit {
     setTimeout(() => {
       this.calendarService.reloadSessions();
     }, 100);
+  }
+
+  onCallDataCreated(callData: CallData): void {
+    this.showNewCallDialog.set(false);
+    this.prefilledCallData = null;
+
+    // TODO: Implement API call to save call data
+    console.log('Call data created:', callData);
+
+    // You can add logic here to send data to an API endpoint
+    // For now, just close the dialog
   }
 
   getClinicConfig(clinicId: number): ClinicConfig {

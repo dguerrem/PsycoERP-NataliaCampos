@@ -1,4 +1,4 @@
-<app-reusable-modal [isOpen]="true" [title]="isEditMode ? 'Editar Cita' : 'Nueva Cita'"
+<app-reusable-modal [isOpen]="true" [title]="isEditMode ? 'Editar Cita' : 'Nueva sesión'"
   [subtitle]="isEditMode ? 'Modificar información de la sesión' : 'Programar una nueva sesión'"
   [isFormValid]="isFormValid" [actionType]="isEditMode ? 'edit' : 'create'" [modalType]="'session'" (onSubmit)="onSubmit()"
   (onCancel)="onClose()" [cancelButtonText]="isEditMode ? 'Cancelar sesión' : null"

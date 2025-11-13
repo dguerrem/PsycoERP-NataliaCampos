@@ -105,7 +105,7 @@ export class NewCallDialogComponent {
   protected togglePaidCall() {
     this.formData.set({
       ...this.formData(),
-      hasPaidCall: !this.formData().hasPaidCall
+      hasPaidCall: !this.formData().hasPaidCall,
     });
   }
 

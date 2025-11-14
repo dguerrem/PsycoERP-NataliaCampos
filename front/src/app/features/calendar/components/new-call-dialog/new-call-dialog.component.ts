@@ -56,39 +56,46 @@ export class NewCallDialogComponent {
 
   constructor() {
     // Update form validity whenever formData changes
-    effect(() => {
-      const data = this.formData();
-      let isValid = !!(
-        data.patientFirstName &&
-        data.patientLastName &&
-        data.patientPhone &&
-        data.sessionDate &&
-        data.startTime &&
-        data.endTime
-      );
+    effect(
+      () => {
+        const data = this.formData();
+        let isValid = !!(
+          data.patientFirstName &&
+          data.patientLastName &&
+          data.patientPhone &&
+          data.sessionDate &&
+          data.startTime &&
+          data.endTime
+        );
 
-      // Si tiene llamada con precio, validar campos adicionales
-      if (data.hasPaidCall) {
-        isValid =
-          isValid &&
-          !!(
-            data.dniNie &&
-            data.billingAddress &&
-            data.price !== undefined &&
-            data.price > 0
-          );
-      }
+        // Si tiene llamada con precio, validar campos adicionales
+        if (data.hasPaidCall) {
+          isValid =
+            isValid &&
+            !!(
+              data.dniNie &&
+              data.billingAddress &&
+              data.price !== undefined &&
+              data.price > 0
+            );
+        }
 
-      this.isFormValid.set(isValid);
-    });
+        this.isFormValid.set(isValid);
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   ngOnInit() {
     if (this.prefilledData) {
-      this.formData.set({
-        ...this.formData(),
-        ...this.prefilledData,
-      });
+      const dataToSet = { ...this.formData(), ...this.prefilledData };
+      
+      // Si hay startTime pero no endTime, calcular automáticamente endTime
+      if (dataToSet.startTime && !dataToSet.endTime) {
+        dataToSet.endTime = this.calculateEndTime(dataToSet.startTime);
+      }
+      
+      this.formData.set(dataToSet);
     }
   }
 
@@ -96,10 +103,45 @@ export class NewCallDialogComponent {
     field: keyof CallData,
     value: string | boolean | number
   ) {
+    const updatedData: Partial<CallData> = {
+      [field]: value,
+    };
+
+    // Si se actualiza startTime, calcular automáticamente endTime (+30 minutos)
+    if (field === 'startTime' && typeof value === 'string' && value) {
+      const endTime = this.calculateEndTime(value);
+      updatedData.endTime = endTime;
+    }
+
     this.formData.set({
       ...this.formData(),
-      [field]: value,
+      ...updatedData,
     });
+  }
+
+  private calculateEndTime(startTime: string): string {
+    if (!startTime) return '';
+
+    try {
+      // Parsear la hora de inicio (formato HH:MM)
+      const [hours, minutes] = startTime.split(':').map(Number);
+
+      // Crear una fecha con la hora de inicio
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+
+      // Añadir 30 minutos
+      date.setMinutes(date.getMinutes() + 30);
+
+      // Formatear de vuelta a HH:MM
+      const endHours = date.getHours().toString().padStart(2, '0');
+      const endMinutes = date.getMinutes().toString().padStart(2, '0');
+
+      return `${endHours}:${endMinutes}`;
+    } catch (error) {
+      console.error('Error calculating end time:', error);
+      return '';
+    }
   }
 
   protected togglePaidCall() {

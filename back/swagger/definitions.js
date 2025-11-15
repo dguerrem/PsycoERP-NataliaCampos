@@ -2566,7 +2566,7 @@ const definitions = {
           PatientMedicalRecord: {
             type: "array",
             items: {
-              $ref: "#/definitions/PatientMedicalRecordItem",
+              $ref: "#/components/schemas/PatientMedicalRecordItem",
             },
             description: "Historial de notas clínicas del paciente",
           },
@@ -3447,6 +3447,13 @@ const definitions = {
         nullable: true,
         description: "Indica si es menor de edad",
         example: false,
+      },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
       },
     },
   },

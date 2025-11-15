@@ -53,6 +53,13 @@ const definitions = {
         description: "Porcentaje de la clínica",
         example: 15.50,
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
       presencial: {
         type: "boolean",
         description: "Indica si la clínica es presencial (tiene dirección) o no. true = Presencial, false = Online",
@@ -887,6 +894,13 @@ const definitions = {
         nullable: true,
         description: "Indica si es menor de edad",
         example: false,
+      },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
       },
     },
   },
@@ -2218,6 +2232,13 @@ const definitions = {
         description: "Indica si es menor de edad",
         example: false,
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
       created_at: {
         type: "string",
         format: "date-time",
@@ -2508,6 +2529,13 @@ const definitions = {
         nullable: true,
         description: "Tipo de clínica basado en si tiene dirección. Online si no tiene dirección, Presencial si la tiene.",
         example: "Presencial",
+      },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
       },
     },
   },
@@ -3152,575 +3180,573 @@ const definitions = {
         description: "Indica si la sesión ha sido facturada (true/false)",
         example: true,
       },
-      properties: {
-        clinic_id: {
-          type: "integer",
-          format: "int64",
-          description: "ID de la clínica",
-          example: 1,
+      clinic_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID de la clínica",
+        example: 1,
+      },
+      clinic_name: {
+        type: "string",
+        description: "Nombre de la clínica",
+        example: "Clínica Psicológica Centro",
+      },
+      total_sessions: {
+        type: "integer",
+        description: "Total de sesiones en esta clínica",
+        example: 45,
+      },
+      sessions: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/SessionDetail",
         },
-        clinic_name: {
-          type: "string",
-          description: "Nombre de la clínica",
-          example: "Clínica Psicológica Centro",
-        },
-        total_sessions: {
-          type: "integer",
-          description: "Total de sesiones en esta clínica",
-          example: 45,
-        },
-        sessions: {
-          type: "array",
-          items: {
-            $ref: "#/components/schemas/SessionDetail",
-          },
-          description: "Detalle de todas las sesiones de esta clínica (para filtros por año en frontend)",
+        description: "Detalle de todas las sesiones de esta clínica (para filtros por año en frontend)",
+      },
+    },
+  },
+
+  SessionsResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      pagination: {
+        $ref: "#/components/schemas/PaginationInfo",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/SessionDetailResponse",
         },
       },
     },
+  },
 
-    SessionsResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          example: true,
-        },
-        pagination: {
-          $ref: "#/components/schemas/PaginationInfo",
-        },
-        data: {
-          type: "array",
-          items: {
-            $ref: "#/components/schemas/SessionDetailResponse",
-          },
-        },
-      },
-    },
-
-    SessionsKPIsResponse: {
-      type: "object",
-      properties: {
-        success: { type: "boolean", example: true },
-        data: {
-          type: "object",
-          properties: {
-            sesiones_completadas: { type: "integer", example: 12 },
-            sesiones_canceladas: { type: "integer", example: 2 },
-            ingresos_brutos: { type: "number", format: "decimal", example: 1200.50 },
-            ingresos_netos: { type: "number", format: "decimal", example: 840.35 }
-          }
+  SessionsKPIsResponse: {
+    type: "object",
+    properties: {
+      success: { type: "boolean", example: true },
+      data: {
+        type: "object",
+        properties: {
+          sesiones_completadas: { type: "integer", example: 12 },
+          sesiones_canceladas: { type: "integer", example: 2 },
+          ingresos_brutos: { type: "number", format: "decimal", example: 1200.50 },
+          ingresos_netos: { type: "number", format: "decimal", example: 840.35 }
         }
       }
-    },
+    }
+  },
 
-    SuccessResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          description: "Indica si la operación fue exitosa",
-          example: true,
-        },
-        message: {
-          type: "string",
-          description: "Mensaje de éxito",
-          example: "Operación completada exitosamente",
-        },
+  SuccessResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        description: "Indica si la operación fue exitosa",
+        example: true,
+      },
+      message: {
+        type: "string",
+        description: "Mensaje de éxito",
+        example: "Operación completada exitosamente",
       },
     },
+  },
 
-    TodayUpcomingSessionsData: {
-      type: "array",
-      items: {
-        $ref: "#/components/schemas/SessionItem",
-      },
-      description: "Lista de sesiones pendientes de hoy (posteriores a la hora actual)",
+  TodayUpcomingSessionsData: {
+    type: "array",
+    items: {
+      $ref: "#/components/schemas/SessionItem",
     },
+    description: "Lista de sesiones pendientes de hoy (posteriores a la hora actual)",
+  },
 
-    TomorrowSessionsData: {
-      type: "array",
-      items: {
-        $ref: "#/components/schemas/SessionItem",
-      },
-      description: "Lista de sesiones del próximo día laborable (viernes→lunes, sábado→lunes, otros→día siguiente)",
+  TomorrowSessionsData: {
+    type: "array",
+    items: {
+      $ref: "#/components/schemas/SessionItem",
     },
+    description: "Lista de sesiones del próximo día laborable (viernes→lunes, sábado→lunes, otros→día siguiente)",
+  },
 
-    UpdateClinicRequest: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: "Nombre de la clínica",
-          example: "Clínica Psicológica Centro Actualizada",
-        },
-        clinic_color: {
-          type: "string",
-          nullable: true,
-          description: "Color de la clínica en formato hexadecimal (#RRGGBB)",
-          pattern: "^#[0-9A-Fa-f]{6}$",
-          example: "#10B981",
-        },
-        address: {
-          type: "string",
-          nullable: true,
-          description: "Dirección de la clínica",
-          example: "Avenida Libertad 456, Barcelona",
-        },
-        price: {
-          type: "number",
-          format: "decimal",
-          nullable: true,
-          minimum: 0,
-          description: "Precio base por sesión en euros",
-          example: 65.00,
-        },
-        percentage: {
-          type: "number",
-          format: "decimal",
-          nullable: true,
-          minimum: 0,
-          maximum: 100,
-          description: "Porcentaje entre 0.00 y 100.00",
-          example: 20.00,
-        },
-        is_billable: {
-          type: "boolean",
-          nullable: true,
-          description: "Indica si la clínica es facturable (opcional)",
-          example: true
-        },
-        billing_address: {
-          type: "string",
-          nullable: true,
-          description: "Dirección de facturación",
-          example: "Calle Facturación 456, Madrid 28001",
-        },
-        cif: {
-          type: "string",
-          nullable: true,
-          description: "CIF (Tax Identification Number)",
-          example: "B12345678",
-        },
-        fiscal_name: {
-          type: "string",
-          nullable: true,
-          description: "Nombre fiscal para facturación",
-          example: "Psicología Integral S.L.",
-        },
+  UpdateClinicRequest: {
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+        description: "Nombre de la clínica",
+        example: "Clínica Psicológica Centro Actualizada",
       },
-    },
-
-    UpdatePatientRequest: {
-      type: "object",
-      properties: {
-        first_name: {
-          type: "string",
-          description: "Nombre del paciente",
-          example: "Juan",
-        },
-        last_name: {
-          type: "string",
-          description: "Apellidos del paciente",
-          example: "Pérez García",
-        },
-        email: {
-          type: "string",
-          format: "email",
-          description: "Email del paciente",
-          example: "juan.perez@email.com",
-        },
-        phone: {
-          type: "string",
-          description: "Teléfono del paciente",
-          example: "+34 666 123 456",
-        },
-        dni: {
-          type: "string",
-          description: "DNI del paciente",
-          example: "12345678A",
-        },
-        gender: {
-          type: "string",
-          enum: ["M", "F", "O"],
-          description: "Género del paciente (M=Masculino, F=Femenino, O=Otro)",
-          example: "M",
-        },
-        occupation: {
-          type: "string",
-          nullable: true,
-          description: "Ocupación/Escuela/Trabajo",
-          example: "Estudiante de Psicología",
-        },
-        birth_date: {
-          type: "string",
-          format: "date",
-          nullable: true,
-          description: "Fecha de nacimiento (YYYY-MM-DD)",
-          example: "1985-03-15",
-        },
-        street: {
-          type: "string",
-          nullable: true,
-          description: "Nombre de la calle",
-          example: "Calle Mayor",
-        },
-        street_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de la calle",
-          example: "123",
-        },
-        door: {
-          type: "string",
-          nullable: true,
-          description: "Puerta/Piso",
-          example: "2A",
-        },
-        postal_code: {
-          type: "string",
-          nullable: true,
-          description: "Código postal",
-          example: "28001",
-        },
-        city: {
-          type: "string",
-          nullable: true,
-          description: "Ciudad",
-          example: "Madrid",
-        },
-        province: {
-          type: "string",
-          nullable: true,
-          description: "Provincia",
-          example: "Madrid",
-        },
-        clinic_id: {
-          type: "integer",
-          format: "int64",
-          nullable: true,
-          description: "ID de la clínica asignada",
-          example: 1,
-        },
-        treatment_start_date: {
-          type: "string",
-          format: "date",
-          nullable: true,
-          description: "Fecha de inicio del tratamiento (YYYY-MM-DD)",
-          example: "2024-01-15",
-        },
-        status: {
-          type: "string",
-          enum: ["en curso", "fin del tratamiento", "en pausa", "abandono", "derivación"],
-          description: "Estado del tratamiento",
-          example: "en curso",
-        },
-        is_minor: {
-          type: "boolean",
-          nullable: true,
-          description: "Indica si es menor de edad",
-          example: false,
-        },
+      clinic_color: {
+        type: "string",
+        nullable: true,
+        description: "Color de la clínica en formato hexadecimal (#RRGGBB)",
+        pattern: "^#[0-9A-Fa-f]{6}$",
+        example: "#10B981",
+      },
+      address: {
+        type: "string",
+        nullable: true,
+        description: "Dirección de la clínica",
+        example: "Avenida Libertad 456, Barcelona",
+      },
+      price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        minimum: 0,
+        description: "Precio base por sesión en euros",
+        example: 65.00,
+      },
+      percentage: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        minimum: 0,
+        maximum: 100,
+        description: "Porcentaje entre 0.00 y 100.00",
+        example: 20.00,
+      },
+      is_billable: {
+        type: "boolean",
+        nullable: true,
+        description: "Indica si la clínica es facturable (opcional)",
+        example: true
+      },
+      billing_address: {
+        type: "string",
+        nullable: true,
+        description: "Dirección de facturación",
+        example: "Calle Facturación 456, Madrid 28001",
+      },
+      cif: {
+        type: "string",
+        nullable: true,
+        description: "CIF (Tax Identification Number)",
+        example: "B12345678",
+      },
+      fiscal_name: {
+        type: "string",
+        nullable: true,
+        description: "Nombre fiscal para facturación",
+        example: "Psicología Integral S.L.",
       },
     },
+  },
 
-    UpdatePatientResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          example: true,
-        },
-        data: {
-          $ref: "#/components/schemas/Patient",
-        },
-        message: {
-          type: "string",
-          example: "Paciente actualizado exitosamente",
-        },
+  UpdatePatientRequest: {
+    type: "object",
+    properties: {
+      first_name: {
+        type: "string",
+        description: "Nombre del paciente",
+        example: "Juan",
+      },
+      last_name: {
+        type: "string",
+        description: "Apellidos del paciente",
+        example: "Pérez García",
+      },
+      email: {
+        type: "string",
+        format: "email",
+        description: "Email del paciente",
+        example: "juan.perez@email.com",
+      },
+      phone: {
+        type: "string",
+        description: "Teléfono del paciente",
+        example: "+34 666 123 456",
+      },
+      dni: {
+        type: "string",
+        description: "DNI del paciente",
+        example: "12345678A",
+      },
+      gender: {
+        type: "string",
+        enum: ["M", "F", "O"],
+        description: "Género del paciente (M=Masculino, F=Femenino, O=Otro)",
+        example: "M",
+      },
+      occupation: {
+        type: "string",
+        nullable: true,
+        description: "Ocupación/Escuela/Trabajo",
+        example: "Estudiante de Psicología",
+      },
+      birth_date: {
+        type: "string",
+        format: "date",
+        nullable: true,
+        description: "Fecha de nacimiento (YYYY-MM-DD)",
+        example: "1985-03-15",
+      },
+      street: {
+        type: "string",
+        nullable: true,
+        description: "Nombre de la calle",
+        example: "Calle Mayor",
+      },
+      street_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de la calle",
+        example: "123",
+      },
+      door: {
+        type: "string",
+        nullable: true,
+        description: "Puerta/Piso",
+        example: "2A",
+      },
+      postal_code: {
+        type: "string",
+        nullable: true,
+        description: "Código postal",
+        example: "28001",
+      },
+      city: {
+        type: "string",
+        nullable: true,
+        description: "Ciudad",
+        example: "Madrid",
+      },
+      province: {
+        type: "string",
+        nullable: true,
+        description: "Provincia",
+        example: "Madrid",
+      },
+      clinic_id: {
+        type: "integer",
+        format: "int64",
+        nullable: true,
+        description: "ID de la clínica asignada",
+        example: 1,
+      },
+      treatment_start_date: {
+        type: "string",
+        format: "date",
+        nullable: true,
+        description: "Fecha de inicio del tratamiento (YYYY-MM-DD)",
+        example: "2024-01-15",
+      },
+      status: {
+        type: "string",
+        enum: ["en curso", "fin del tratamiento", "en pausa", "abandono", "derivación"],
+        description: "Estado del tratamiento",
+        example: "en curso",
+      },
+      is_minor: {
+        type: "boolean",
+        nullable: true,
+        description: "Indica si es menor de edad",
+        example: false,
       },
     },
+  },
 
-    UpdateUserRequest: {
-      type: "object",
-      properties: {
-        license_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de colegiado (license/registration number)",
-          example: "COLE-12345",
-        },
-        irpf: {
-          type: "number",
-          format: "decimal",
-          nullable: true,
-          description: "Porcentaje IRPF (ej: 15.5)",
-          example: 15.5,
-        },
-        name: {
-          type: "string",
-          description: "Nombre completo del usuario",
-          example: "Admin Usuario Actualizado",
-        },
-        dni: {
-          type: "string",
-          nullable: true,
-          description: "Documento Nacional de Identidad",
-          example: "12345678A",
-        },
-        street: {
-          type: "string",
-          nullable: true,
-          description: "Nombre de la calle",
-          example: "Calle Mayor",
-        },
-        street_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de la calle",
-          example: "123",
-        },
-        door: {
-          type: "string",
-          nullable: true,
-          description: "Puerta/Piso",
-          example: "2A",
-        },
-        city: {
-          type: "string",
-          nullable: true,
-          description: "Ciudad",
-          example: "Madrid",
-        },
-        province: {
-          type: "string",
-          nullable: true,
-          description: "Provincia",
-          example: "Madrid",
-        },
-        postal_code: {
-          type: "string",
-          nullable: true,
-          description: "Código postal",
-          example: "28001",
-        },
-        iban: {
-          type: "string",
-          nullable: true,
-          description: "IBAN de la cuenta bancaria",
-          example: "ES9121000418450200051332",
-        },
+  UpdatePatientResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      data: {
+        $ref: "#/components/schemas/Patient",
+      },
+      message: {
+        type: "string",
+        example: "Paciente actualizado exitosamente",
       },
     },
+  },
 
-    UpdateUserResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          example: true,
-        },
-        data: {
-          $ref: "#/components/schemas/UserDetail",
-        },
-        message: {
-          type: "string",
-          example: "Usuario actualizado exitosamente",
-        },
+  UpdateUserRequest: {
+    type: "object",
+    properties: {
+      license_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de colegiado (license/registration number)",
+        example: "COLE-12345",
+      },
+      irpf: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Porcentaje IRPF (ej: 15.5)",
+        example: 15.5,
+      },
+      name: {
+        type: "string",
+        description: "Nombre completo del usuario",
+        example: "Admin Usuario Actualizado",
+      },
+      dni: {
+        type: "string",
+        nullable: true,
+        description: "Documento Nacional de Identidad",
+        example: "12345678A",
+      },
+      street: {
+        type: "string",
+        nullable: true,
+        description: "Nombre de la calle",
+        example: "Calle Mayor",
+      },
+      street_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de la calle",
+        example: "123",
+      },
+      door: {
+        type: "string",
+        nullable: true,
+        description: "Puerta/Piso",
+        example: "2A",
+      },
+      city: {
+        type: "string",
+        nullable: true,
+        description: "Ciudad",
+        example: "Madrid",
+      },
+      province: {
+        type: "string",
+        nullable: true,
+        description: "Provincia",
+        example: "Madrid",
+      },
+      postal_code: {
+        type: "string",
+        nullable: true,
+        description: "Código postal",
+        example: "28001",
+      },
+      iban: {
+        type: "string",
+        nullable: true,
+        description: "IBAN de la cuenta bancaria",
+        example: "ES9121000418450200051332",
       },
     },
+  },
 
-    UseBonusSessionResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          example: true,
-        },
-        message: {
-          type: "string",
-          example: "Sesión registrada exitosamente",
-        },
-        data: {
-          type: "object",
-          properties: {
-            history_id: {
-              type: "integer",
-              format: "int64",
-              description: "ID del registro de historial creado",
-              example: 15,
-            },
-            bonus_id: {
-              type: "integer",
-              format: "int64",
-              description: "ID del bonus",
-              example: 5,
-            },
-            new_used_sessions: {
-              type: "integer",
-              description: "Nuevo número de sesiones utilizadas",
-              example: 4,
-            },
-            remaining_sessions: {
-              type: "integer",
-              description: "Sesiones restantes",
-              example: 6,
-            },
-            new_status: {
-              type: "string",
-              enum: ["active", "consumed", "expired"],
-              description: "Nuevo estado del bonus",
-              example: "active",
-            },
+  UpdateUserResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      data: {
+        $ref: "#/components/schemas/UserDetail",
+      },
+      message: {
+        type: "string",
+        example: "Usuario actualizado exitosamente",
+      },
+    },
+  },
+
+  UseBonusSessionResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Sesión registrada exitosamente",
+      },
+      data: {
+        type: "object",
+        properties: {
+          history_id: {
+            type: "integer",
+            format: "int64",
+            description: "ID del registro de historial creado",
+            example: 15,
+          },
+          bonus_id: {
+            type: "integer",
+            format: "int64",
+            description: "ID del bonus",
+            example: 5,
+          },
+          new_used_sessions: {
+            type: "integer",
+            description: "Nuevo número de sesiones utilizadas",
+            example: 4,
+          },
+          remaining_sessions: {
+            type: "integer",
+            description: "Sesiones restantes",
+            example: 6,
+          },
+          new_status: {
+            type: "string",
+            enum: ["active", "consumed", "expired"],
+            description: "Nuevo estado del bonus",
+            example: "active",
           },
         },
       },
     },
+  },
 
-    User: {
-      type: "object",
-      properties: {
-        id: {
-          type: "integer",
-          format: "int64",
-          description: "ID único del usuario",
-          example: 1,
-        },
-        email: {
-          type: "string",
-          format: "email",
-          description: "Email del usuario",
-          example: "demo@psycoerp.es",
-        },
-        name: {
-          type: "string",
-          description: "Nombre del usuario",
-          example: "Admin Usuario",
-        },
-        license_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de colegiado (license/registration number)",
-          example: "COLE-12345",
-        },
-        last_login: {
-          type: "string",
-          format: "date-time",
-          nullable: true,
-          description: "Fecha del último login",
-          example: "2024-12-15T14:30:00Z",
-        },
+  User: {
+    type: "object",
+    properties: {
+      id: {
+        type: "integer",
+        format: "int64",
+        description: "ID único del usuario",
+        example: 1,
+      },
+      email: {
+        type: "string",
+        format: "email",
+        description: "Email del usuario",
+        example: "demo@psycoerp.es",
+      },
+      name: {
+        type: "string",
+        description: "Nombre del usuario",
+        example: "Admin Usuario",
+      },
+      license_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de colegiado (license/registration number)",
+        example: "COLE-12345",
+      },
+      last_login: {
+        type: "string",
+        format: "date-time",
+        nullable: true,
+        description: "Fecha del último login",
+        example: "2024-12-15T14:30:00Z",
       },
     },
+  },
 
-    UserDetail: {
-      type: "object",
-      properties: {
-        id: {
-          type: "integer",
-          format: "int64",
-          description: "ID único del usuario",
-          example: 1,
-        },
-        name: {
-          type: "string",
-          description: "Nombre completo del usuario",
-          example: "Admin Usuario",
-        },
-        license_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de colegiado (license/registration number)",
-          example: "COLE-12345",
-        },
-        dni: {
-          type: "string",
-          nullable: true,
-          description: "Documento Nacional de Identidad",
-          example: "12345678A",
-        },
-        street: {
-          type: "string",
-          nullable: true,
-          description: "Nombre de la calle",
-          example: "Calle Mayor",
-        },
-        street_number: {
-          type: "string",
-          nullable: true,
-          description: "Número de la calle",
-          example: "123",
-        },
-        door: {
-          type: "string",
-          nullable: true,
-          description: "Puerta/Piso",
-          example: "2A",
-        },
-        city: {
-          type: "string",
-          nullable: true,
-          description: "Ciudad",
-          example: "Madrid",
-        },
-        province: {
-          type: "string",
-          nullable: true,
-          description: "Provincia",
-          example: "Madrid",
-        },
-        postal_code: {
-          type: "string",
-          nullable: true,
-          description: "Código postal",
-          example: "28001",
-        },
-        iban: {
-          type: "string",
-          nullable: true,
-          description: "IBAN de la cuenta bancaria",
-          example: "ES9121000418450200051332",
-        },
+  UserDetail: {
+    type: "object",
+    properties: {
+      id: {
+        type: "integer",
+        format: "int64",
+        description: "ID único del usuario",
+        example: 1,
+      },
+      name: {
+        type: "string",
+        description: "Nombre completo del usuario",
+        example: "Admin Usuario",
+      },
+      license_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de colegiado (license/registration number)",
+        example: "COLE-12345",
+      },
+      dni: {
+        type: "string",
+        nullable: true,
+        description: "Documento Nacional de Identidad",
+        example: "12345678A",
+      },
+      street: {
+        type: "string",
+        nullable: true,
+        description: "Nombre de la calle",
+        example: "Calle Mayor",
+      },
+      street_number: {
+        type: "string",
+        nullable: true,
+        description: "Número de la calle",
+        example: "123",
+      },
+      door: {
+        type: "string",
+        nullable: true,
+        description: "Puerta/Piso",
+        example: "2A",
+      },
+      city: {
+        type: "string",
+        nullable: true,
+        description: "Ciudad",
+        example: "Madrid",
+      },
+      province: {
+        type: "string",
+        nullable: true,
+        description: "Provincia",
+        example: "Madrid",
+      },
+      postal_code: {
+        type: "string",
+        nullable: true,
+        description: "Código postal",
+        example: "28001",
+      },
+      iban: {
+        type: "string",
+        nullable: true,
+        description: "IBAN de la cuenta bancaria",
+        example: "ES9121000418450200051332",
       },
     },
+  },
 
-    UserDetailResponse: {
-      type: "object",
-      properties: {
-        success: {
-          type: "boolean",
-          example: true,
-        },
-        data: {
-          $ref: "#/components/schemas/UserDetail",
-        },
-        message: {
-          type: "string",
-          example: "Usuario obtenido exitosamente",
-        },
+  UserDetailResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      data: {
+        $ref: "#/components/schemas/UserDetail",
+      },
+      message: {
+        type: "string",
+        example: "Usuario obtenido exitosamente",
       },
     },
-    WeeklySessionsItem: {
-      type: "object",
-      properties: {
-        week_number: {
-          type: "integer",
-          description: "Número de semana del mes (1-5)",
-          example: 2,
-        },
-        week_label: {
-          type: "string",
-          description: "Etiqueta descriptiva de la semana",
-          example: "Semana 2",
-        },
-        session_count: {
-          type: "integer",
-          description: "Número de sesiones realizadas en esta semana",
-          example: 15,
-        },
+  },
+  WeeklySessionsItem: {
+    type: "object",
+    properties: {
+      week_number: {
+        type: "integer",
+        description: "Número de semana del mes (1-5)",
+        example: 2,
       },
-    }
-  }
-}
+      week_label: {
+        type: "string",
+        description: "Etiqueta descriptiva de la semana",
+        example: "Semana 2",
+      },
+      session_count: {
+        type: "integer",
+        description: "Número de sesiones realizadas en esta semana",
+        example: 15,
+      },
+    },
+  },
+};
 
 module.exports = definitions;

@@ -16,26 +16,27 @@ const getSessions = async (db, filters = {}) => {
 
   // Query principal para obtener datos
   let dataQuery = `
-        SELECT
-            s.id AS session_id,
-            s.session_date,
-            s.start_time,
-            s.end_time,
-            s.mode,
-            s.status,
-            s.price,
-            s.payment_method,
-            s.notes,
-            p.id AS patient_id,
-            CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
-            c.id AS clinic_id,
-            c.name AS clinic_name,
-            c.clinic_color,
-            c.percentage AS clinic_percentage
-        FROM sessions s
-        LEFT JOIN patients p ON s.patient_id = p.id AND p.status = 'en curso'
-        LEFT JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
-        WHERE s.is_active = true
+      SELECT
+        s.id AS session_id,
+        s.session_date,
+        s.start_time,
+        s.end_time,
+        s.mode,
+        s.status,
+        s.price,
+        s.payment_method,
+        s.notes,
+        s.invoiced,
+        p.id AS patient_id,
+        CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+        c.id AS clinic_id,
+        c.name AS clinic_name,
+        c.clinic_color,
+        c.percentage AS clinic_percentage
+      FROM sessions s
+      LEFT JOIN patients p ON s.patient_id = p.id AND p.status = 'en curso'
+      LEFT JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
+      WHERE s.is_active = true
     `;
   const params = [];
   const conditions = [];
@@ -129,6 +130,7 @@ const getSessions = async (db, filters = {}) => {
           net_price: netPrice,
           payment_method: row.payment_method,
           notes: row.notes,
+          invoiced: row.invoiced === 1,
           PatientData: {
             id: row.patient_id,
             name: row.patient_name,

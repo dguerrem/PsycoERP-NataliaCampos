@@ -1,28 +1,31 @@
 const getUserById = async (db, userId) => {
   const query = `
     SELECT 
-      id,
-      license_number,
-      irpf,
-      name,
-      dni,
-      street,
-      street_number,
-      door,
-      city,
-      province,
-      postal_code,
-      iban
-    FROM users
-    WHERE id = ? AND is_active = true
+      u.id,
+      u.license_number,
+      u.irpf,
+      u.name,
+      u.dni,
+      u.street,
+      u.street_number,
+      u.door,
+      u.city,
+      u.province,
+      u.postal_code,
+      u.iban,
+      u.principal_clinic_id,
+      c.name AS clinic_name
+    FROM users u
+    LEFT JOIN clinics c ON u.principal_clinic_id = c.id
+    WHERE u.id = ? AND u.is_active = true
   `;
-  
+
   const [rows] = await db.execute(query, [userId]);
-  
+
   if (rows.length === 0) {
     return null;
   }
-  
+
   return rows[0];
 };
 

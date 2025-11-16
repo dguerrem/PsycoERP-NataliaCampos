@@ -26,9 +26,21 @@ const obtenerUsuarioPorId = async (req, res) => {
       });
     }
 
+    // Agregar PrincipalClinicInfo si tiene principal_clinic_id
+    const responseData = { ...user };
+    if (user.principal_clinic_id) {
+      responseData.PrincipalClinicInfo = {
+        id: user.principal_clinic_id,
+        name: user.clinic_name
+      };
+    }
+    // Remover clinic_name del objeto principal
+    delete responseData.clinic_name;
+    delete responseData.principal_clinic_id;
+
     res.json({
       success: true,
-      data: user,
+      data: responseData,
       message: "Usuario obtenido exitosamente"
     });
   } catch (err) {

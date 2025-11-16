@@ -77,6 +77,10 @@ const updateUser = async (db, userId, userData) => {
     fields.push("iban = ?");
     values.push(userData.iban);
   }
+  if (userData.principal_clinic_id !== undefined) {
+    fields.push("principal_clinic_id = ?");
+    values.push(userData.principal_clinic_id);
+  }
 
   if (fields.length === 0) {
     throw new Error("No hay campos para actualizar");
@@ -100,7 +104,14 @@ const updateUser = async (db, userId, userData) => {
   return await getUserById(db, userId);
 };
 
+const checkClinicExists = async (db, clinicId) => {
+  const query = "SELECT id FROM clinics WHERE id = ? AND is_active = true";
+  const [rows] = await db.execute(query, [clinicId]);
+  return rows.length > 0;
+};
+
 module.exports = {
   getUserById,
   updateUser,
+  checkClinicExists,
 };

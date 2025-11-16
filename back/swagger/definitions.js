@@ -3544,6 +3544,13 @@ const definitions = {
         description: "IBAN de la cuenta bancaria",
         example: "ES9121000418450200051332",
       },
+      principal_clinic_id: {
+        type: "integer",
+        format: "int64",
+        nullable: true,
+        description: "ID de la clínica principal del usuario",
+        example: 1,
+      },
     },
   },
 

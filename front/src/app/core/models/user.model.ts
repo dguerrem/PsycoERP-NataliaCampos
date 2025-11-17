@@ -1,3 +1,8 @@
+export interface PrincipalClinicInfo {
+  id: number;
+  name: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -13,6 +18,8 @@ export interface User {
   city?: string;
   province?: string;
   postal_code?: string;
+  principal_clinic_id?: number | null;
+  PrincipalClinicInfo?: PrincipalClinicInfo | null;
 }
 
 export interface UserProfileResponse {
@@ -31,4 +38,5 @@ export interface UpdateUserProfileRequest {
   city: string;
   province: string;
   postal_code: string;
+  principal_clinic_id?: number | null;
 }

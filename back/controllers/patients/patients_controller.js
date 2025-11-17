@@ -80,7 +80,10 @@ const obtenerPacientes = async (req, res) => {
     res.json({
       success: true,
       pagination: result.pagination,
-      data: result.data,
+      data: result.data.map(patient => ({
+        ...patient,
+        special_price: patient.special_price || null
+      })),
     });
   } catch (err) {
     logger.error("Error al obtener pacientes:", err.message);
@@ -114,7 +117,10 @@ const obtenerPacientePorId = async (req, res) => {
     res.json({
       success: true,
       data: {
-        PatientResume: pacienteData.PatientResume,
+        PatientResume: {
+          ...pacienteData.PatientResume,
+          special_price: pacienteData.PatientResume.special_price || null
+        },
         PatientData: pacienteData.PatientData,
         PatientMedicalRecord: pacienteData.PatientMedicalRecord,
         PatientSessions: pacienteData.PatientSessions,
@@ -200,7 +206,10 @@ const obtenerPacientesInactivos = async (req, res) => {
     res.json({
       success: true,
       pagination: result.pagination,
-      data: result.data,
+      data: result.data.map(patient => ({
+        ...patient,
+        special_price: patient.special_price || null
+      })),
     });
   } catch (err) {
     logger.error("Error al obtener pacientes inactivos:", err.message);
@@ -273,6 +282,7 @@ const crearPaciente = async (req, res) => {
       treatment_start_date,
       status,
       is_minor,
+      special_price,
     } = req.body;
 
     // Validaciones obligatorias
@@ -345,6 +355,7 @@ const crearPaciente = async (req, res) => {
       treatment_start_date,
       status: status || "en curso",
       is_minor,
+      special_price,
     };
 
     const nuevoPaciente = await createPatient(req.db, patientData);
@@ -458,6 +469,7 @@ const actualizarPaciente = async (req, res) => {
       treatment_start_date,
       status,
       is_minor,
+      special_price,
     } = req.body;
 
     // Validar que se proporcione el ID y sea un número válido
@@ -488,6 +500,7 @@ const actualizarPaciente = async (req, res) => {
     if (treatment_start_date !== undefined) updateData.treatment_start_date = treatment_start_date;
     if (status !== undefined) updateData.status = status;
     if (is_minor !== undefined) updateData.is_minor = is_minor;
+    if (special_price !== undefined) updateData.special_price = special_price;
 
     // Validar que se envíe al menos un campo
     if (Object.keys(updateData).length === 0) {

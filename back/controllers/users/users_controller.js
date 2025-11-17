@@ -1,6 +1,7 @@
 const {
   getUserById,
   updateUser,
+  checkClinicExists,
 } = require("../../models/users/users_model");
 
 const obtenerUsuarioPorId = async (req, res) => {
@@ -26,9 +27,21 @@ const obtenerUsuarioPorId = async (req, res) => {
       });
     }
 
+    // Agregar PrincipalClinicInfo si tiene principal_clinic_id
+    const responseData = { ...user };
+    if (user.principal_clinic_id) {
+      responseData.PrincipalClinicInfo = {
+        id: user.principal_clinic_id,
+        name: user.clinic_name
+      };
+    }
+    // Remover clinic_name del objeto principal
+    delete responseData.clinic_name;
+    delete responseData.principal_clinic_id;
+
     res.json({
       success: true,
-      data: user,
+      data: responseData,
       message: "Usuario obtenido exitosamente"
     });
   } catch (err) {
@@ -44,7 +57,7 @@ const obtenerUsuarioPorId = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, license_number, irpf, dni, street, street_number, door, city, province, postal_code, iban } = req.body;
+    const { name, license_number, irpf, dni, street, street_number, door, city, province, postal_code, iban, principal_clinic_id } = req.body;
 
     // Validar que se proporcione el ID y sea un número válido
     if (!id || isNaN(id)) {
@@ -68,6 +81,7 @@ const actualizarUsuario = async (req, res) => {
     if (province !== undefined) userData.province = province;
     if (postal_code !== undefined) userData.postal_code = postal_code;
     if (iban !== undefined) userData.iban = iban;
+    if (principal_clinic_id !== undefined) userData.principal_clinic_id = principal_clinic_id;
 
     // Validar que se envíe al menos un campo
     if (Object.keys(userData).length === 0) {
@@ -76,6 +90,18 @@ const actualizarUsuario = async (req, res) => {
         error: "Debe proporcionar al menos un campo para actualizar",
         message: "El cuerpo de la petición no puede estar vacío"
       });
+    }
+
+    // Validar que la clínica principal exista si se proporciona
+    if (userData.principal_clinic_id !== undefined && userData.principal_clinic_id !== null) {
+      const clinicExists = await checkClinicExists(req.db, userData.principal_clinic_id);
+      if (!clinicExists) {
+        return res.status(400).json({
+          success: false,
+          error: "Clínica no encontrada",
+          message: "La clínica principal especificada no existe o no está activa"
+        });
+      }
     }
 
     const updatedUser = await updateUser(req.db, parseInt(id), userData);

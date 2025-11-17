@@ -53,6 +53,13 @@ const definitions = {
         description: "Porcentaje de la clínica",
         example: 15.50,
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
       presencial: {
         type: "boolean",
         description: "Indica si la clínica es presencial (tiene dirección) o no. true = Presencial, false = Online",
@@ -887,6 +894,13 @@ const definitions = {
         nullable: true,
         description: "Indica si es menor de edad",
         example: false,
+      },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
       },
     },
   },
@@ -2218,6 +2232,13 @@ const definitions = {
         description: "Indica si es menor de edad",
         example: false,
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
       created_at: {
         type: "string",
         format: "date-time",
@@ -2509,6 +2530,13 @@ const definitions = {
         description: "Tipo de clínica basado en si tiene dirección. Online si no tiene dirección, Presencial si la tiene.",
         example: "Presencial",
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
     },
   },
 
@@ -2538,7 +2566,7 @@ const definitions = {
           PatientMedicalRecord: {
             type: "array",
             items: {
-              $ref: "#/definitions/PatientMedicalRecordItem",
+              $ref: "#/components/schemas/PatientMedicalRecordItem",
             },
             description: "Historial de notas clínicas del paciente",
           },
@@ -3087,67 +3115,71 @@ const definitions = {
   SessionItem: {
     type: "object",
     properties: {
+      session_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID único de la sesión",
+        example: 1,
+      },
+      session_date: {
+        type: "string",
+        format: "date",
+        description: "Fecha de la sesión (YYYY-MM-DD)",
+        example: "2024-01-15",
+      },
       start_time: {
         type: "string",
         format: "time",
-        description: "Hora de inicio de la sesión (HH:MM:SS)",
-        example: "14:30:00",
+        description: "Hora de inicio (HH:mm:ss)",
+        example: "09:00:00",
       },
-      patient_name: {
+      end_time: {
         type: "string",
-        description: "Nombre completo del paciente",
-        example: "Juan Pérez García",
+        format: "time",
+        description: "Hora de fin (HH:mm:ss)",
+        example: "10:00:00",
       },
-      session_type: {
+      mode: {
         type: "string",
-        description: "Modalidad de la sesión (online o presencial)",
-        example: "Presencial",
+        enum: ["presencial", "online"],
+        description: "Modalidad de la sesión",
+        example: "presencial",
       },
-      clinic_name: {
-        type: "string",
-        description: "Nombre de la clínica",
-        example: "Clínica Psicológica Centro",
-      },
-    },
-  },
-
-  SessionPatientData: {
-    type: "object",
-    properties: {
-      id: {
-        type: "integer",
-        format: "int64",
-        description: "ID del paciente",
-        example: 1,
-      },
-      name: {
-        type: "string",
-        description: "Nombre completo del paciente",
-        example: "Juan Pérez García",
-      },
-    },
-  },
-
-  SessionResultItem: {
-    type: "object",
-    properties: {
-      session_status: {
+      status: {
         type: "string",
         enum: ["scheduled", "completed", "cancelled", "no-show"],
         description: "Estado de la sesión",
         example: "completed",
       },
-      session_count: {
-        type: "integer",
-        description: "Número de sesiones con este estado",
-        example: 45,
+      price: {
+        type: "number",
+        format: "decimal",
+        description: "Precio de la sesión",
+        example: 60.00,
       },
-    },
-  },
-
-  SessionsByClinicItem: {
-    type: "object",
-    properties: {
+      net_price: {
+        type: "number",
+        format: "decimal",
+        description: "Precio neto para el psicólogo",
+        example: 42.00,
+      },
+      payment_method: {
+        type: "string",
+        enum: ["cash", "card", "transfer", "insurance", "bonus"],
+        description: "Método de pago",
+        example: "card",
+      },
+      notes: {
+        type: "string",
+        nullable: true,
+        description: "Notas médicas de la sesión",
+        example: "Paciente llegó tarde",
+      },
+      invoiced: {
+        type: "boolean",
+        description: "Indica si la sesión ha sido facturada (true/false)",
+        example: true,
+      },
       clinic_id: {
         type: "integer",
         format: "int64",
@@ -3416,6 +3448,13 @@ const definitions = {
         description: "Indica si es menor de edad",
         example: false,
       },
+      special_price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio especial para el paciente (opcional)",
+        example: 50.00,
+      },
     },
   },
 
@@ -3504,6 +3543,13 @@ const definitions = {
         nullable: true,
         description: "IBAN de la cuenta bancaria",
         example: "ES9121000418450200051332",
+      },
+      principal_clinic_id: {
+        type: "integer",
+        format: "int64",
+        nullable: true,
+        description: "ID de la clínica principal del usuario",
+        example: 1,
       },
     },
   },
@@ -3676,6 +3722,17 @@ const definitions = {
         description: "IBAN de la cuenta bancaria",
         example: "ES9121000418450200051332",
       },
+      principal_clinic_id: {
+        type: "integer",
+        format: "int64",
+        nullable: true,
+        description: "ID de la clínica principal del usuario",
+        example: 1,
+      },
+      PrincipalClinicInfo: {
+        $ref: "#/components/schemas/PrincipalClinicInfo",
+        nullable: true,
+      },
     },
   },
 
@@ -3692,6 +3749,22 @@ const definitions = {
       message: {
         type: "string",
         example: "Usuario obtenido exitosamente",
+      },
+    },
+  },
+  PrincipalClinicInfo: {
+    type: "object",
+    properties: {
+      id: {
+        type: "integer",
+        format: "int64",
+        description: "ID de la clínica principal",
+        example: 1,
+      },
+      name: {
+        type: "string",
+        description: "Nombre de la clínica principal",
+        example: "Clínica Central",
       },
     },
   },

@@ -103,12 +103,57 @@ const sessionsPaths = {
       ],
       responses: {
         200: {
-          description: "Lista paginada de sesiones obtenida exitosamente. Incluye información de paginación y datos de sesiones con detalles del paciente, clínica y notas médicas.",
+          description: "Lista paginada de sesiones obtenida exitosamente. Incluye información de paginación y datos de sesiones con detalles del paciente, clínica, notas médicas y el campo 'invoiced' (true/false) que indica si la sesión ha sido facturada.",
           content: {
             "application/json": {
               schema: {
                 $ref: "#/components/schemas/SessionsResponse",
               },
+              examples: {
+                example: {
+                  summary: "Ejemplo de respuesta con campo invoiced",
+                  value: {
+                    success: true,
+                    pagination: {
+                      currentPage: 1,
+                      totalPages: 2,
+                      totalRecords: 12,
+                      recordsPerPage: 10,
+                      hasNextPage: true,
+                      hasPrevPage: false,
+                      nextPage: 2,
+                      prevPage: null
+                    },
+                    data: [
+                      {
+                        SessionDetailData: {
+                          session_id: 1,
+                          session_date: "2024-01-15",
+                          start_time: "09:00:00",
+                          end_time: "10:00:00",
+                          mode: "presencial",
+                          status: "completed",
+                          price: 60.00,
+                          net_price: 42.00,
+                          payment_method: "card",
+                          notes: "Paciente llegó tarde",
+                          invoiced: true,
+                          PatientData: {
+                            id: 5,
+                            name: "Juan Pérez"
+                          },
+                          ClinicDetailData: {
+                            clinic_id: 2,
+                            clinic_name: "Clínica Centro",
+                            clinic_color: "#3B82F6",
+                            clinic_percentage: 70
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
             },
           },
         },

@@ -37,7 +37,8 @@ const getPatients = async (db, filters = {}) => {
             DATE_FORMAT(treatment_start_date, '%Y-%m-%d') as treatment_start_date,
             is_minor,
             DATE_FORMAT(created_at,'%Y-%m-%d') as created_at,
-            DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at
+            DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at,
+            special_price
         FROM patients
         WHERE is_active = true AND status = 'en curso'
     `;
@@ -223,6 +224,7 @@ const getPatientById = async (db, id) => {
             p.postal_code as codigo_postal,
             p.city as ciudad,
             p.province as provincia,
+            p.special_price,
             p.gender as genero,
             p.occupation as ocupacion,
             p.clinic_id,
@@ -328,7 +330,8 @@ const getInactivePatients = async (db, filters = {}) => {
             DATE_FORMAT(treatment_start_date, '%Y-%m-%d') as treatment_start_date,
             is_minor,
             DATE_FORMAT(created_at,'%Y-%m-%d') as created_at,
-            DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at
+            DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at,
+            special_price
         FROM patients
         WHERE is_active = true AND status != 'en curso'
     `;
@@ -485,6 +488,7 @@ const createPatient = async (db, patientData) => {
     treatment_start_date,
     status,
     is_minor,
+    special_price,
   } = patientData;
 
   const query = `
@@ -507,8 +511,9 @@ const createPatient = async (db, patientData) => {
       treatment_start_date,
       status,
       is_minor,
+      special_price,
       is_active
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
   `;
 
   const params = [
@@ -530,6 +535,7 @@ const createPatient = async (db, patientData) => {
     treatment_start_date,
     status,
     is_minor,
+    special_price,
   ];
 
   const [result] = await db.execute(query, params);
@@ -556,6 +562,7 @@ const createPatient = async (db, patientData) => {
       DATE_FORMAT(treatment_start_date, '%Y-%m-%d') as treatment_start_date,
       status,
       is_minor,
+      special_price,
       DATE_FORMAT(created_at,'%Y-%m-%d') as created_at,
       DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at
     FROM patients
@@ -646,6 +653,7 @@ const updatePatient = async (db, id, updateData) => {
       DATE_FORMAT(treatment_start_date, '%Y-%m-%d') as treatment_start_date,
       status,
       is_minor,
+      special_price,
       DATE_FORMAT(created_at,'%Y-%m-%d') as created_at,
       DATE_FORMAT(updated_at,'%Y-%m-%d') as updated_at
     FROM patients
@@ -666,6 +674,7 @@ const getActivePatientsWithClinicInfo = async (db) => {
       c.name as nombreClinica,
       c.price as precioSesion,
       c.percentage as porcentaje,
+      p.special_price,
       CASE
         WHEN c.address IS NULL OR c.address = '' THEN 0
         ELSE 1

@@ -195,6 +195,17 @@ const getClinicBillableStatus = async (db, clinicId) => {
   return rows[0].is_billable === 1; // Retorna boolean
 };
 
+// Comprueba si una clínica es principal para algún usuario activo
+const hasPrincipalClinicUsers = async (db, clinicId) => {
+  const query = `
+    SELECT COUNT(*) as total
+    FROM users
+    WHERE principal_clinic_id = ? AND is_active = true
+  `;
+  const [rows] = await db.execute(query, [clinicId]);
+  return rows[0].total > 0;
+};
+
 
 const createClinic = async (db, data) => {
   const { name, clinic_color, address, price, percentage, is_billable, billing_address, cif, fiscal_name } = data;
@@ -274,5 +285,6 @@ module.exports = {
   hasActivePatients,
   hasSessions,
   clinicHasInvoices,
-  getClinicBillableStatus
+  getClinicBillableStatus,
+  hasPrincipalClinicUsers
 };

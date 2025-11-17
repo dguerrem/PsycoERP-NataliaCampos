@@ -7,6 +7,7 @@ const {
   hasSessions,
   clinicHasInvoices,
   getClinicBillableStatus,
+  hasPrincipalClinicUsers,
 } = require("../../models/clinics/clinics_model");
 const logger = require("../../utils/logger");
 
@@ -216,6 +217,14 @@ const eliminarClinica = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "No se puede eliminar la clínica: existen facturas asociadas",
+      });
+    }
+
+    const esClinicaPrincipal = await hasPrincipalClinicUsers(req.db, id);
+    if (esClinicaPrincipal) {
+      return res.status(400).json({
+        success: false,
+        error: "No se puede eliminar la clínica: está marcada como clínica principal para el usuario actual",
       });
     }
 

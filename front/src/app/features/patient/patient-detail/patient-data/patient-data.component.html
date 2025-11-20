@@ -420,6 +420,32 @@
               </div>
             }
           </div>
+
+          <div>
+            @if (isEditing()) {
+              <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="special_price">
+                Precio Especial
+              </label>
+              <input
+                id="special_price"
+                formControlName="special_price"
+                class="flex h-10 w-full rounded-md border-2 border-blue-200 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-colors"
+                type="number"
+                step="0.01"
+                placeholder="Ej: 50.00" />
+            } @else {
+              <div class="text-sm font-medium leading-none mb-2">
+                Precio Especial
+              </div>
+              <div class="flex h-10 w-full items-center rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                @if (patientForm.get('special_price')?.value !== null && patientForm.get('special_price')?.value !== undefined) {
+                  <span class="font-semibold">{{ patientForm.get('special_price')?.value }}€</span>
+                } @else {
+                  <span class="text-gray-400">Sin precio especial</span>
+                }
+              </div>
+            }
+          </div>
         </div>
       </div>
     </div>

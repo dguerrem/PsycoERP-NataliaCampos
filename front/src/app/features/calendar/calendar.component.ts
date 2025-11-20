@@ -468,6 +468,10 @@ export class CalendarComponent implements OnInit {
     return sessionData.SessionDetailData.payment_method !== 'pendiente';
   }
 
+  isSessionInvoiced(sessionData: SessionData): boolean {
+    return sessionData.SessionDetailData.invoiced;
+  }
+
   hasActiveSessionInSlot(date: Date, hour: string): boolean {
     const sessions = this.getSessionDataForDateAndHour(date, hour);
     return sessions.some((session) => !this.isSessionCancelled(session));
@@ -753,6 +757,7 @@ export class CalendarComponent implements OnInit {
     status: string;
     price: string;
     paymentMethod: string;
+    invoiced: boolean;
     notes: string;
   } {
     const session = sessionData.SessionDetailData;
@@ -763,6 +768,7 @@ export class CalendarComponent implements OnInit {
       status: this.getSessionStatusText(sessionData),
       price: this.formatPrice(session.price),
       paymentMethod: this.formatPaymentMethod(session.payment_method),
+      invoiced: session.invoiced,
       notes: session.notes || 'Sin notas'
     };
   }

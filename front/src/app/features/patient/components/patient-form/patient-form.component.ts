@@ -107,6 +107,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
       clinic_id: ['', [Validators.required]],
       treatment_start_date: ['', [Validators.required]],
       status: ['en curso', [Validators.required]],
+      special_price: [null, [Validators.min(0)]],
 
       // Campos automáticos
       is_minor: [false],
@@ -133,6 +134,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
         clinic_id: this.patient.clinic_id || '',
         treatment_start_date: this.patient.treatment_start_date || '',
         status: this.patient.status || 'en curso',
+        special_price: this.patient.special_price || null,
         is_minor: this.patient.is_minor || false,
       });
     } else {
@@ -159,6 +161,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
       clinic_id: '',
       treatment_start_date: '',
       status: 'en curso',
+      special_price: null,
       is_minor: false,
     });
   }
@@ -282,6 +285,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
       clinic_id: 'Clínica',
       treatment_start_date: 'Fecha inicio tratamiento',
       status: 'Estado del tratamiento',
+      special_price: 'Precio especial',
     };
     return labels[fieldName] || fieldName;
   }

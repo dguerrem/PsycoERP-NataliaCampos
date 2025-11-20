@@ -152,7 +152,7 @@
         <h3 class="text-lg font-semibold text-gray-900">Información del Tratamiento</h3>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
 
         <app-form-input controlName="treatment_start_date" label="Fecha Inicio Tratamiento" type="date"
           [required]="true">
@@ -161,6 +161,11 @@
         <app-form-input controlName="status" label="Estado del Tratamiento" type="select" [options]="statusOptions"
           [required]="true">
         </app-form-input>
+
+        <app-form-input controlName="special_price" label="Precio Especial" type="number" placeholder="Ej: 50.00"
+          [required]="false">
+        </app-form-input>
+
         <!-- Clinic Selector -->
         <app-clinic-selector [control]="$any(patientForm.get('clinic_id'))" [clinics]="clinics" [required]="true"
           [disabled]="isEditing" label="Clínica" placeholder="Buscar clínica...">

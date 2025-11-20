@@ -36,6 +36,14 @@
           <span class="text-muted-foreground">Tratamiento:</span>
           <span>{{ formatDate(patient.treatment_start_date) }}</span>
         </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-muted-foreground">Precio especial:</span>
+          @if (patient.special_price !== null && patient.special_price !== undefined) {
+            <span class="font-semibold">{{ patient.special_price }}€</span>
+          } @else {
+            <span class="text-muted-foreground">Sin precio especial</span>
+          }
+        </div>
       </div>
     </div>
 

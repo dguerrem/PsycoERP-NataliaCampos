@@ -316,7 +316,7 @@
                     @if (layout.sessionData.SessionDetailData.completed &&
                     !layout.isCancelled) {
                     <div
-                      class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm"
+                      class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm"
                     >
                       <svg
                         class="w-2.5 h-2.5 text-white"
@@ -396,6 +396,26 @@
                             )
                           }}
                         </span>
+                        @if (isSessionInvoiced(layout.sessionData) &&
+                        !layout.isCancelled) {
+                        <svg
+                          class="w-3.5 h-3.5 flex-shrink-0"
+                          [class]="
+                            layout.isCancelled ? 'text-gray-500' : 'text-blue-300'
+                          "
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          title="Facturada"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="3"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        }
                       </div>
                     </div>
                   </div>
@@ -592,7 +612,7 @@
                 @if (sessionData.SessionDetailData.completed &&
                 !isSessionCancelled(sessionData)) {
                 <div
-                  class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center z-10 shadow-sm"
+                  class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center z-10 shadow-sm"
                 >
                   <svg
                     class="w-2.5 h-2.5 text-white"
@@ -638,12 +658,32 @@
                   <div
                     [class]="
                       isSessionCancelled(sessionData)
-                        ? 'truncate font-medium text-xs'
-                        : 'truncate font-medium text-xs text-white'
+                        ? 'truncate font-medium text-xs flex items-center gap-1'
+                        : 'truncate font-medium text-xs text-white flex items-center gap-1'
                     "
                   >
-                    {{ formatTime(sessionData.SessionDetailData.start_time) }} -
-                    {{ formatTime(sessionData.SessionDetailData.end_time) }}
+                    <span>{{ formatTime(sessionData.SessionDetailData.start_time) }} -
+                    {{ formatTime(sessionData.SessionDetailData.end_time) }}</span>
+                    @if (isSessionInvoiced(sessionData) &&
+                    !isSessionCancelled(sessionData)) {
+                    <svg
+                      class="w-3.5 h-3.5 flex-shrink-0"
+                      [class]="
+                        isSessionCancelled(sessionData) ? 'text-gray-500' : 'text-blue-300'
+                      "
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      title="Facturada"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="3"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    }
                   </div>
                   <div
                     [class]="
@@ -784,7 +824,7 @@
 <!-- Tooltip -->
 @if (hoveredSession(); as session) {
 <div
-  class="fixed z-50 bg-gray-900 text-white text-sm rounded-lg shadow-xl px-3 py-2 pointer-events-none"
+  class="fixed z-50 bg-gray-900 text-white text-sm rounded-lg shadow-xl px-3 py-2 pointer-events-none min-w-[200px]"
   [style.left.px]="tooltipPosition().x"
   [style.top.px]="tooltipPosition().y"
   title="{{ getTooltipContent(session).patientName }} - {{
@@ -798,6 +838,29 @@
     <span>{{ getTooltipContent(session).patientName }}</span>
   </div>
   <div class="text-xs text-gray-300">{{ getTooltipContent(session).time }}</div>
+  <div class="text-xs text-gray-300 mt-1">
+    {{ getTooltipContent(session).clinic }}
+  </div>
+  <div class="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-700">
+    @if (getTooltipContent(session).invoiced) {
+    <svg
+      class="w-3 h-3 text-blue-400 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+    <span class="text-xs text-blue-400 font-medium">Facturada</span>
+    } @else {
+    <span class="text-xs text-gray-400">Sin facturar</span>
+    }
+  </div>
 </div>
 }
 

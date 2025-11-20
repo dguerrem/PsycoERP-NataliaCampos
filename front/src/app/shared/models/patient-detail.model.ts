@@ -69,6 +69,7 @@ export interface PatientData {
   codigo_postal: string;
   ciudad: string;
   provincia: string;
+  special_price?: string; // "30.00" - comes as string from API
   genero: 'M' | 'F' | 'O';
   ocupacion: string;
   clinic_id: number;
@@ -100,6 +101,7 @@ export class PatientDetailUtils {
       clinic_id: apiData.clinic_id,
       treatment_start_date: apiData.fecha_inicio_tratamiento,
       status: apiData.estado as 'en curso' | 'fin del tratamiento' | 'en pausa' | 'abandono' | 'derivación',
+      special_price: apiData.special_price ? parseFloat(apiData.special_price) : undefined,
       nombre_clinica: apiData.nombre_clinica,
       tipo_clinica: apiData.tipo_clinica,
       is_minor: apiData.menor_edad === 1

@@ -28,6 +28,7 @@ export interface Patient {
     | 'en pausa'
     | 'abandono'
     | 'derivación';
+  special_price?: number; // Precio especial para el paciente
 
   // Información adicional de la clínica
   nombre_clinica?: string;

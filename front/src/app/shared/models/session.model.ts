@@ -42,6 +42,7 @@ export interface SessionData {
     cancelled: boolean; // true/false - to handle cancelled sessions
     no_show: boolean; // true/false - to handle no-show sessions
     sended: boolean; // true/false - to handle reminder sent status
+    invoiced: boolean; // true/false - to handle invoiced sessions
     notes?: string; // "Primera sesión del paciente"
     created_at: string; // ISO timestamp
     price_brute: number; // Price before applying clinic percentage

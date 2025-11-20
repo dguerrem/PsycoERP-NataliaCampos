@@ -63,6 +63,7 @@ export class PatientDataComponent implements OnInit, OnChanges {
       // Treatment Information (tipo_clinica and nombre_clinica are read-only, not included)
       treatment_start_date: [''],
       status: [''],
+      special_price: [null, [Validators.min(0)]],
     });
   }
 
@@ -117,6 +118,7 @@ export class PatientDataComponent implements OnInit, OnChanges {
       province: this.patient.province,
       treatment_start_date: this.patient.treatment_start_date,
       status: this.patient.status,
+      special_price: this.patient.special_price || null,
     });
   }
 
@@ -145,6 +147,7 @@ export class PatientDataComponent implements OnInit, OnChanges {
         province: formValue.province,
         treatment_start_date: formValue.treatment_start_date,
         status: formValue.status,
+        special_price: formValue.special_price || null,
       };
 
       const result = await this.patientsService.updatePatientAsync(

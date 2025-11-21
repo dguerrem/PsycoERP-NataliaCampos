@@ -369,6 +369,181 @@ const definitions = {
     },
   },
 
+  CallData: {
+    type: "object",
+    properties: {
+      call_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID único de la llamada",
+        example: 123,
+      },
+      call_first_name: {
+        type: "string",
+        description: "Nombre de la persona que llama",
+        example: "Juan",
+      },
+      call_last_name: {
+        type: "string",
+        description: "Apellidos de la persona que llama",
+        example: "García López",
+      },
+      call_phone: {
+        type: "string",
+        description: "Teléfono de contacto",
+        example: "+34612345678",
+      },
+      session_date: {
+        type: "string",
+        format: "date",
+        description: "Fecha de la llamada (YYYY-MM-DD)",
+        example: "2024-12-15",
+      },
+      start_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de inicio (HH:MM:SS)",
+        example: "10:00:00",
+      },
+      end_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de fin (HH:MM:SS)",
+        example: "10:30:00",
+      },
+      is_billable_call: {
+        type: "boolean",
+        description: "Indica si la llamada es facturable",
+        example: true,
+      },
+      price: {
+        type: "number",
+        format: "decimal",
+        description: "Precio de la llamada (0 si no es facturable)",
+        example: 30.00,
+      },
+      payment_method: {
+        type: "string",
+        enum: ["bizum", "transferencia", "tarjeta", "efectivo", "pendiente"],
+        description: "Método de pago",
+        example: "transferencia",
+      },
+      notes: {
+        type: "string",
+        nullable: true,
+        description: "Observaciones de la llamada",
+        example: "Consulta inicial sobre terapia de pareja",
+      },
+      clinic_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID de la clínica principal del usuario",
+        example: 1,
+      },
+    },
+  },
+
+  CreateCallRequest: {
+    type: "object",
+    required: [
+      "call_first_name",
+      "call_last_name",
+      "call_phone",
+      "session_date",
+      "start_time",
+      "end_time",
+      "payment_method",
+    ],
+    properties: {
+      call_first_name: {
+        type: "string",
+        description: "Nombre de la persona que llama",
+        example: "Juan",
+      },
+      call_last_name: {
+        type: "string",
+        description: "Apellidos de la persona que llama",
+        example: "García López",
+      },
+      call_phone: {
+        type: "string",
+        description: "Teléfono de contacto",
+        example: "+34612345678",
+      },
+      session_date: {
+        type: "string",
+        format: "date",
+        description: "Fecha de la llamada (YYYY-MM-DD)",
+        example: "2024-12-15",
+      },
+      start_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de inicio (HH:MM:SS)",
+        example: "10:00:00",
+      },
+      end_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de fin (HH:MM:SS)",
+        example: "10:30:00",
+      },
+      is_billable_call: {
+        type: "boolean",
+        description: "Indica si la llamada es facturable (si es true, son obligatorios call_dni, call_billing_address y price)",
+        example: false,
+      },
+      call_dni: {
+        type: "string",
+        nullable: true,
+        description: "DNI/NIE (obligatorio si is_billable_call es true)",
+        example: "12345678A",
+      },
+      call_billing_address: {
+        type: "string",
+        nullable: true,
+        description: "Dirección de facturación (obligatorio si is_billable_call es true)",
+        example: "Calle Mayor 123, 28001 Madrid",
+      },
+      price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio de la llamada (obligatorio si is_billable_call es true, por defecto 0 si no es facturable)",
+        example: 30.00,
+      },
+      payment_method: {
+        type: "string",
+        enum: ["bizum", "transferencia", "tarjeta", "efectivo", "pendiente"],
+        description: "Método de pago",
+        example: "transferencia",
+      },
+      notes: {
+        type: "string",
+        nullable: true,
+        description: "Observaciones de la llamada",
+        example: "Consulta inicial sobre terapia de pareja",
+      },
+    },
+  },
+
+  CreateCallResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Llamada registrada exitosamente",
+      },
+      data: {
+        $ref: "#/components/schemas/CallData",
+      },
+    },
+  },
+
   Clinic: {
     type: "object",
     properties: {

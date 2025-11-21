@@ -222,6 +222,81 @@ const callsPaths = {
                 },
             },
         },
+        delete: {
+            tags: ["Calls"],
+            summary: "Eliminar llamada",
+            description: "Elimina una llamada del sistema mediante soft delete (marca is_active = false). La llamada no se elimina físicamente de la base de datos.",
+            parameters: [
+                {
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    description: "ID único de la llamada",
+                    schema: {
+                        type: "integer",
+                        format: "int64",
+                        example: 123,
+                    },
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Llamada eliminada exitosamente",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/DeleteCallResponse",
+                            },
+                        },
+                    },
+                },
+                400: {
+                    description: "ID inválido",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "ID inválido",
+                                message: "Debe proporcionar un ID de llamada válido",
+                            },
+                        },
+                    },
+                },
+                404: {
+                    description: "Llamada no encontrada",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Llamada no encontrada",
+                                message: "La llamada especificada no existe o ya está eliminada",
+                            },
+                        },
+                    },
+                },
+                500: {
+                    description: "Error interno del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Error al eliminar la llamada",
+                                message: "Ha ocurrido un error interno del servidor",
+                            },
+                        },
+                    },
+                },
+            },
+        },
     },
 };
 

@@ -151,7 +151,22 @@ const updateCall = async (db, callId, callData) => {
     return updatedCall[0];
 };
 
+// Eliminar llamada (soft delete)
+const deleteCall = async (db, callId) => {
+    const [result] = await db.execute(
+        "UPDATE sessions SET is_active = false WHERE id = ? AND is_active = true AND is_call = 1",
+        [callId]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new Error("Llamada no encontrada o ya está eliminada");
+    }
+
+    return true;
+};
+
 module.exports = {
     createCall,
     updateCall,
+    deleteCall,
 };

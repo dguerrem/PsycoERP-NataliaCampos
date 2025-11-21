@@ -1,4 +1,4 @@
-const { createCall, updateCall } = require("../../models/calls/calls_model");
+const { createCall, updateCall, deleteCall } = require("../../models/calls/calls_model");
 const { getUserById } = require("../../models/users/users_model");
 const { checkTimeOverlap } = require("../../models/sessions/sessions_model");
 
@@ -308,7 +308,47 @@ const actualizarLlamada = async (req, res) => {
     }
 };
 
+const eliminarLlamada = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Validar que se proporcione el ID y sea un número válido
+        if (!id || isNaN(id)) {
+            return res.status(400).json({
+                success: false,
+                error: "ID inválido",
+                message: "Debe proporcionar un ID de llamada válido",
+            });
+        }
+
+        // Eliminar la llamada (soft delete)
+        await deleteCall(req.db, parseInt(id));
+
+        res.json({
+            success: true,
+            message: "Llamada eliminada exitosamente",
+        });
+    } catch (err) {
+        console.error("Error al eliminar llamada:", err.message);
+
+        if (err.message === "Llamada no encontrada o ya está eliminada") {
+            return res.status(404).json({
+                success: false,
+                error: "Llamada no encontrada",
+                message: "La llamada especificada no existe o ya está eliminada",
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: "Error al eliminar la llamada",
+            message: "Ha ocurrido un error interno del servidor",
+        });
+    }
+};
+
 module.exports = {
     crearLlamada,
     actualizarLlamada,
+    eliminarLlamada,
 };

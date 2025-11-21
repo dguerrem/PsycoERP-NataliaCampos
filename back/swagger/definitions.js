@@ -544,6 +544,98 @@ const definitions = {
     },
   },
 
+  UpdateCallRequest: {
+    type: "object",
+    properties: {
+      call_first_name: {
+        type: "string",
+        description: "Nombre de la persona que llama",
+        example: "Juan",
+      },
+      call_last_name: {
+        type: "string",
+        description: "Apellidos de la persona que llama",
+        example: "García López",
+      },
+      call_phone: {
+        type: "string",
+        description: "Teléfono de contacto",
+        example: "+34612345678",
+      },
+      session_date: {
+        type: "string",
+        format: "date",
+        description: "Fecha de la llamada (YYYY-MM-DD)",
+        example: "2024-12-15",
+      },
+      start_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de inicio (HH:MM:SS)",
+        example: "10:00:00",
+      },
+      end_time: {
+        type: "string",
+        format: "time",
+        description: "Hora de fin (HH:MM:SS)",
+        example: "10:30:00",
+      },
+      is_billable_call: {
+        type: "boolean",
+        description: "Indica si la llamada es facturable (si se cambia a true, son obligatorios call_dni, call_billing_address y price)",
+        example: false,
+      },
+      call_dni: {
+        type: "string",
+        nullable: true,
+        description: "DNI/NIE (obligatorio si is_billable_call es true)",
+        example: "12345678A",
+      },
+      call_billing_address: {
+        type: "string",
+        nullable: true,
+        description: "Dirección de facturación (obligatorio si is_billable_call es true)",
+        example: "Calle Mayor 123, 28001 Madrid",
+      },
+      price: {
+        type: "number",
+        format: "decimal",
+        nullable: true,
+        description: "Precio de la llamada (obligatorio si is_billable_call es true)",
+        example: 30.00,
+      },
+      payment_method: {
+        type: "string",
+        enum: ["bizum", "transferencia", "tarjeta", "efectivo", "pendiente"],
+        description: "Método de pago",
+        example: "transferencia",
+      },
+      notes: {
+        type: "string",
+        nullable: true,
+        description: "Observaciones de la llamada",
+        example: "Consulta inicial sobre terapia de pareja",
+      },
+    },
+  },
+
+  UpdateCallResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Llamada actualizada exitosamente",
+      },
+      data: {
+        $ref: "#/components/schemas/CallData",
+      },
+    },
+  },
+
   Clinic: {
     type: "object",
     properties: {

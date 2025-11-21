@@ -94,6 +94,135 @@ const callsPaths = {
             },
         },
     },
+    "/api/calls/{id}": {
+        put: {
+            tags: ["Calls"],
+            summary: "Actualizar llamada existente",
+            description: "Actualiza la información de una llamada telefónica. Todos los campos son opcionales, solo se actualizarán los campos enviados. Si se cambia is_billable_call a true, son obligatorios DNI, dirección y precio.",
+            parameters: [
+                {
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    description: "ID único de la llamada",
+                    schema: {
+                        type: "integer",
+                        format: "int64",
+                        example: 123,
+                    },
+                },
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            $ref: "#/components/schemas/UpdateCallRequest",
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Llamada actualizada exitosamente",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/UpdateCallResponse",
+                            },
+                        },
+                    },
+                },
+                400: {
+                    description: "Datos inválidos o incompletos",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            examples: {
+                                invalid_id: {
+                                    summary: "ID inválido",
+                                    value: {
+                                        success: false,
+                                        error: "ID inválido",
+                                        message: "Debe proporcionar un ID de llamada válido",
+                                    },
+                                },
+                                empty_body: {
+                                    summary: "Cuerpo vacío",
+                                    value: {
+                                        success: false,
+                                        error: "Debe proporcionar al menos un campo para actualizar",
+                                        message: "El cuerpo de la petición no puede estar vacío",
+                                    },
+                                },
+                                missing_billable_data: {
+                                    summary: "Faltan datos para llamada facturable",
+                                    value: {
+                                        success: false,
+                                        error: "Datos incompletos para llamada facturable",
+                                        message: "Para llamadas facturables son obligatorios: DNI, dirección de facturación y precio",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                404: {
+                    description: "Llamada no encontrada",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Llamada no encontrada",
+                                message: "La llamada especificada no existe o no está activa",
+                            },
+                        },
+                    },
+                },
+                409: {
+                    description: "Conflicto de horario",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Conflicto de horario",
+                                message: "Ya existe una sesión/llamada en este horario (10:00:00 - 11:00:00)",
+                                conflicting_session: {
+                                    id: 45,
+                                    patient_name: "Juan Pérez",
+                                    start_time: "10:00:00",
+                                    end_time: "11:00:00",
+                                },
+                            },
+                        },
+                    },
+                },
+                500: {
+                    description: "Error interno del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Error al actualizar la llamada",
+                                message: "Ha ocurrido un error interno del servidor",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
 };
 
 module.exports = callsPaths;

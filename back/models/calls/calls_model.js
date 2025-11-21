@@ -69,6 +69,89 @@ const createCall = async (db, callData) => {
     return newCall[0];
 };
 
+// Actualizar llamada existente
+const updateCall = async (db, callId, callData) => {
+    const fields = [];
+    const values = [];
+
+    if (callData.call_first_name !== undefined) {
+        fields.push("call_first_name = ?");
+        values.push(callData.call_first_name);
+    }
+    if (callData.call_last_name !== undefined) {
+        fields.push("call_last_name = ?");
+        values.push(callData.call_last_name);
+    }
+    if (callData.call_phone !== undefined) {
+        fields.push("call_phone = ?");
+        values.push(callData.call_phone);
+    }
+    if (callData.session_date !== undefined) {
+        fields.push("session_date = ?");
+        values.push(callData.session_date);
+    }
+    if (callData.start_time !== undefined) {
+        fields.push("start_time = ?");
+        values.push(callData.start_time);
+    }
+    if (callData.end_time !== undefined) {
+        fields.push("end_time = ?");
+        values.push(callData.end_time);
+    }
+    if (callData.is_billable_call !== undefined) {
+        fields.push("is_billable_call = ?");
+        values.push(callData.is_billable_call ? 1 : 0);
+    }
+    if (callData.call_dni !== undefined) {
+        fields.push("call_dni = ?");
+        values.push(callData.call_dni);
+    }
+    if (callData.call_billing_address !== undefined) {
+        fields.push("call_billing_address = ?");
+        values.push(callData.call_billing_address);
+    }
+    if (callData.price !== undefined) {
+        fields.push("price = ?");
+        values.push(callData.price);
+    }
+    if (callData.payment_method !== undefined) {
+        fields.push("payment_method = ?");
+        values.push(callData.payment_method);
+    }
+    if (callData.notes !== undefined) {
+        fields.push("notes = ?");
+        values.push(callData.notes);
+    }
+
+    if (fields.length === 0) {
+        throw new Error("No hay campos para actualizar");
+    }
+
+    fields.push("updated_at = NOW()");
+    values.push(callId);
+
+    const query = `
+        UPDATE sessions 
+        SET ${fields.join(", ")} 
+        WHERE id = ? AND is_active = true AND is_call = 1
+    `;
+
+    const [result] = await db.execute(query, values);
+
+    if (result.affectedRows === 0) {
+        return null;
+    }
+
+    // Retornar la llamada actualizada
+    const [updatedCall] = await db.execute(
+        "SELECT * FROM sessions WHERE id = ? AND is_active = true AND is_call = 1",
+        [callId]
+    );
+
+    return updatedCall[0];
+};
+
 module.exports = {
     createCall,
+    updateCall,
 };

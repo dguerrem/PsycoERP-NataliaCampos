@@ -90,7 +90,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
       dni: ['', [Validators.required, Validators.minLength(8)]],
       birth_date: ['', [Validators.required]],
       gender: ['', [Validators.required]],
-      occupation: ['', [Validators.required]],
+      occupation: [''],
 
       // Dirección completa
       street: ['', [Validators.required]],

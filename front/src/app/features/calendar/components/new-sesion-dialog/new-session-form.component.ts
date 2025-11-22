@@ -436,14 +436,19 @@ export class NewSessionFormComponent implements OnInit {
       // Update base_price and mode when patient changes (only in create mode)
       if (patient && !isEditMode) {
         const mode = patient.presencial ? 'presencial' : 'online';
+
+        // Use special_price if available and greater than 0, otherwise use clinic's precioSesion
+        const basePrice = patient.special_price && patient.special_price > 0
+          ? patient.special_price
+          : patient.precioSesion;
+
         this.sessionForm.patchValue({
-          base_price: patient.precioSesion,
+          base_price: basePrice,
           mode: mode,
         });
 
         // Calculate and set net price for new sessions
-        const calculatedNetPrice =
-          patient.precioSesion * (patient.porcentaje / 100);
+        const calculatedNetPrice = basePrice * (patient.porcentaje / 100);
         this.netPrice.set(calculatedNetPrice);
       }
     });

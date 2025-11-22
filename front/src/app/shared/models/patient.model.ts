@@ -51,6 +51,7 @@ export interface PatientSelector {
   precioSesion: number;
   porcentaje: number;
   presencial?: boolean; // Added to handle mode selection
+  special_price?: number; // Precio especial del paciente
 }
 
 // Backward compatibility interface for existing code

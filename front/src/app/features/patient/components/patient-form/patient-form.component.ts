@@ -107,7 +107,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
       clinic_id: ['', [Validators.required]],
       treatment_start_date: ['', [Validators.required]],
       status: ['en curso', [Validators.required]],
-      special_price: [null, [Validators.min(0)]],
+      special_price: [0, [Validators.required, Validators.min(0)]],
 
       // Campos automáticos
       is_minor: [false],

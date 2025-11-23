@@ -111,6 +111,14 @@ export class PatientFormComponent implements OnInit, OnChanges {
 
       // Campos automáticos
       is_minor: [false],
+
+      // Información de progenitores (solo para menores)
+      progenitor1_full_name: [''],
+      progenitor1_dni: [''],
+      progenitor1_phone: [''],
+      progenitor2_full_name: [''],
+      progenitor2_dni: [''],
+      progenitor2_phone: [''],
     });
   }
 
@@ -136,7 +144,15 @@ export class PatientFormComponent implements OnInit, OnChanges {
         status: this.patient.status || 'en curso',
         special_price: this.patient.special_price || null,
         is_minor: this.patient.is_minor || false,
+        progenitor1_full_name: this.patient.progenitor1_full_name || '',
+        progenitor1_dni: this.patient.progenitor1_dni || '',
+        progenitor1_phone: this.patient.progenitor1_phone || '',
+        progenitor2_full_name: this.patient.progenitor2_full_name || '',
+        progenitor2_dni: this.patient.progenitor2_dni || '',
+        progenitor2_phone: this.patient.progenitor2_phone || '',
       });
+      // Update validators after populating
+      this.updateProgenitorValidators();
     } else {
       this.resetForm();
     }
@@ -163,7 +179,43 @@ export class PatientFormComponent implements OnInit, OnChanges {
       status: 'en curso',
       special_price: null,
       is_minor: false,
+      progenitor1_full_name: '',
+      progenitor1_dni: '',
+      progenitor1_phone: '',
+      progenitor2_full_name: '',
+      progenitor2_dni: '',
+      progenitor2_phone: '',
     });
+    // Clear validators
+    this.updateProgenitorValidators();
+  }
+
+  /**
+   * Update validators for progenitor fields based on whether patient is minor
+   */
+  private updateProgenitorValidators(): void {
+    const isMinor = this.patientForm.get('is_minor')?.value;
+
+    const progenitor1FullName = this.patientForm.get('progenitor1_full_name');
+    const progenitor1Dni = this.patientForm.get('progenitor1_dni');
+    const progenitor1Phone = this.patientForm.get('progenitor1_phone');
+
+    if (isMinor) {
+      // Progenitor 1 fields are required for minors
+      progenitor1FullName?.setValidators([Validators.required, Validators.minLength(2)]);
+      progenitor1Dni?.setValidators([Validators.required, Validators.minLength(8)]);
+      progenitor1Phone?.setValidators([Validators.required, Validators.minLength(9)]);
+    } else {
+      // Clear validators if not minor
+      progenitor1FullName?.clearValidators();
+      progenitor1Dni?.clearValidators();
+      progenitor1Phone?.clearValidators();
+    }
+
+    // Update validity
+    progenitor1FullName?.updateValueAndValidity();
+    progenitor1Dni?.updateValueAndValidity();
+    progenitor1Phone?.updateValueAndValidity();
   }
 
   get isEditing(): boolean {
@@ -182,9 +234,23 @@ export class PatientFormComponent implements OnInit, OnChanges {
     return this.patientForm.valid;
   }
 
+  get isMinor(): boolean {
+    return this.patientForm.get('is_minor')?.value || false;
+  }
+
   handleSubmit(): void {
     if (this.patientForm.valid) {
       const formData = this.patientForm.value;
+
+      // If not minor, remove progenitor fields from payload
+      if (!formData.is_minor) {
+        delete formData.progenitor1_full_name;
+        delete formData.progenitor1_dni;
+        delete formData.progenitor1_phone;
+        delete formData.progenitor2_full_name;
+        delete formData.progenitor2_dni;
+        delete formData.progenitor2_phone;
+      }
 
       if (this.isEditing && this.patient) {
         const updatedPatient: Patient = {
@@ -240,6 +306,9 @@ export class PatientFormComponent implements OnInit, OnChanges {
       const isMinor = actualAge < 18;
 
       this.patientForm.patchValue({ is_minor: isMinor });
+
+      // Update validators when minor status changes
+      this.updateProgenitorValidators();
     }
   }
 
@@ -286,6 +355,12 @@ export class PatientFormComponent implements OnInit, OnChanges {
       treatment_start_date: 'Fecha inicio tratamiento',
       status: 'Estado del tratamiento',
       special_price: 'Precio especial',
+      progenitor1_full_name: 'Nombre completo (Progenitor 1)',
+      progenitor1_dni: 'DNI (Progenitor 1)',
+      progenitor1_phone: 'Teléfono (Progenitor 1)',
+      progenitor2_full_name: 'Nombre completo (Progenitor 2)',
+      progenitor2_dni: 'DNI (Progenitor 2)',
+      progenitor2_phone: 'Teléfono (Progenitor 2)',
     };
     return labels[fieldName] || fieldName;
   }

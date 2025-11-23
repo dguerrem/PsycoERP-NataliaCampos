@@ -64,6 +64,17 @@ export class PatientDataComponent implements OnInit, OnChanges {
       treatment_start_date: [''],
       status: [''],
       special_price: [null, [Validators.min(0)]],
+
+      // Campos automáticos
+      is_minor: [false],
+
+      // Progenitor Information (for minors)
+      progenitor1_full_name: [''],
+      progenitor1_dni: [''],
+      progenitor1_phone: [''],
+      progenitor2_full_name: [''],
+      progenitor2_dni: [''],
+      progenitor2_phone: [''],
     });
   }
 
@@ -85,6 +96,10 @@ export class PatientDataComponent implements OnInit, OnChanges {
     return age;
   });
 
+  readonly isMinor = computed(() => {
+    return this.age() < 18;
+  });
+
   ngOnInit() {
     if (this.patient) {
       this.loadPatientData();
@@ -102,6 +117,10 @@ export class PatientDataComponent implements OnInit, OnChanges {
   }
 
   private loadPatientData() {
+    // Calculate if patient is minor
+    const birthDate = this.patient.birth_date ? new Date(this.patient.birth_date) : null;
+    const isMinor = birthDate ? this.calculateIsMinor(birthDate) : false;
+
     this.patientForm.patchValue({
       first_name: this.patient.first_name,
       last_name: this.patient.last_name,
@@ -119,7 +138,53 @@ export class PatientDataComponent implements OnInit, OnChanges {
       treatment_start_date: this.patient.treatment_start_date,
       status: this.patient.status,
       special_price: this.patient.special_price || null,
+      is_minor: isMinor,
+      progenitor1_full_name: this.patient.progenitor1_full_name || '',
+      progenitor1_dni: this.patient.progenitor1_dni || '',
+      progenitor1_phone: this.patient.progenitor1_phone || '',
+      progenitor2_full_name: this.patient.progenitor2_full_name || '',
+      progenitor2_dni: this.patient.progenitor2_dni || '',
+      progenitor2_phone: this.patient.progenitor2_phone || '',
     });
+
+    // Update validators based on minor status
+    this.updateProgenitorValidators();
+  }
+
+  private calculateIsMinor(birthDate: Date): boolean {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    const dayDiff = today.getDate() - birth.getDate();
+
+    const actualAge = age - (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? 1 : 0);
+    return actualAge < 18;
+  }
+
+  private updateProgenitorValidators(): void {
+    const isMinor = this.isMinor();
+
+    const progenitor1FullName = this.patientForm.get('progenitor1_full_name');
+    const progenitor1Dni = this.patientForm.get('progenitor1_dni');
+    const progenitor1Phone = this.patientForm.get('progenitor1_phone');
+
+    if (isMinor) {
+      // Progenitor 1 fields are required for minors
+      progenitor1FullName?.setValidators([Validators.required, Validators.minLength(2)]);
+      progenitor1Dni?.setValidators([Validators.required, Validators.minLength(8)]);
+      progenitor1Phone?.setValidators([Validators.required, Validators.minLength(9)]);
+    } else {
+      // Clear validators if not minor
+      progenitor1FullName?.clearValidators();
+      progenitor1Dni?.clearValidators();
+      progenitor1Phone?.clearValidators();
+    }
+
+    // Update validity
+    progenitor1FullName?.updateValueAndValidity();
+    progenitor1Dni?.updateValueAndValidity();
+    progenitor1Phone?.updateValueAndValidity();
   }
 
   onEdit() {
@@ -149,6 +214,16 @@ export class PatientDataComponent implements OnInit, OnChanges {
         status: formValue.status,
         special_price: formValue.special_price || null,
       };
+
+      // Only include progenitor fields if patient is minor
+      if (this.isMinor()) {
+        updatedPatient.progenitor1_full_name = formValue.progenitor1_full_name;
+        updatedPatient.progenitor1_dni = formValue.progenitor1_dni;
+        updatedPatient.progenitor1_phone = formValue.progenitor1_phone;
+        updatedPatient.progenitor2_full_name = formValue.progenitor2_full_name || '';
+        updatedPatient.progenitor2_dni = formValue.progenitor2_dni || '';
+        updatedPatient.progenitor2_phone = formValue.progenitor2_phone || '';
+      }
 
       const result = await this.patientsService.updatePatientAsync(
         this.patient.id,

@@ -196,8 +196,8 @@ export class CalendarComponent implements OnInit {
   onNewCallClickForDateTime(date: Date, hour: string): void {
     // Pre-fill the form with the selected date and hour
     this.prefilledCallData = {
-      sessionDate: this.formatDateForInput(date),
-      startTime: hour,
+      session_date: this.formatDateForInput(date),
+      start_time: hour,
     };
     this.showNewCallDialog.set(true);
   }
@@ -205,7 +205,7 @@ export class CalendarComponent implements OnInit {
   onNewCallClickForDate(date: Date): void {
     // Pre-fill the form with the selected date
     this.prefilledCallData = {
-      sessionDate: this.formatDateForInput(date),
+      session_date: this.formatDateForInput(date),
     };
     this.showNewCallDialog.set(true);
   }

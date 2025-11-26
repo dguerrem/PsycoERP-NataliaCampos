@@ -3429,12 +3429,61 @@ const definitions = {
         description: "Notas de la sesión",
         example: "Primera sesión del paciente",
       },
+      invoiced: {
+        type: "boolean",
+        description: "Indica si la sesión ha sido facturada",
+        example: false,
+      },
+      is_call: {
+        type: "boolean",
+        description: "Indica si es una llamada (true) o una sesión normal (false)",
+        example: false,
+      },
       PatientData: {
         $ref: "#/components/schemas/SessionPatientData",
       },
       ClinicDetailData: {
         $ref: "#/components/schemas/ClinicData",
-      }
+      },
+      CallData: {
+        type: "object",
+        nullable: true,
+        description: "Datos de la llamada (solo presente si is_call es true)",
+        properties: {
+          call_first_name: {
+            type: "string",
+            description: "Nombre de la persona que llamó",
+            example: "Juan",
+          },
+          call_last_name: {
+            type: "string",
+            description: "Apellidos de la persona que llamó",
+            example: "García López",
+          },
+          call_phone: {
+            type: "string",
+            description: "Teléfono de contacto",
+            example: "+34612345678",
+          },
+          is_billable_call: {
+            type: "boolean",
+            description: "Indica si la llamada es facturable",
+            example: true,
+          },
+          call_dni: {
+            type: "string",
+            nullable: true,
+            description: "DNI/NIE de la persona (solo si is_billable_call es true)",
+            example: "12345678A",
+          },
+          call_billing_address: {
+            type: "string",
+            nullable: true,
+            description: "Dirección de facturación (solo si is_billable_call es true)",
+            example: "Calle Mayor 123, 28001 Madrid",
+          },
+        },
+      },
     },
   },
 

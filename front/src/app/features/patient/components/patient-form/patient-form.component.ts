@@ -240,7 +240,10 @@ export class PatientFormComponent implements OnInit, OnChanges {
 
   handleSubmit(): void {
     if (this.patientForm.valid) {
-      const formData = this.patientForm.value;
+      const formData = { ...this.patientForm.value };
+
+      // Ensure is_minor is always a boolean
+      formData.is_minor = Boolean(formData.is_minor);
 
       // If not minor, remove progenitor fields from payload
       if (!formData.is_minor) {
@@ -259,7 +262,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
         };
         this.onSave.emit(updatedPatient);
       } else {
-        // Para crear nuevo paciente, no incluir el id
+        // Para crear nuevo paciente, no incluir el id si existe
         const { id, ...createData } = formData;
         this.onSave.emit(createData);
       }

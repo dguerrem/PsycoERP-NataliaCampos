@@ -175,13 +175,37 @@ export class CalendarComponent implements OnInit {
   }
 
   onSessionClick(sessionData: SessionData): void {
-    // Open the session form in edit mode instead of showing popup
-    this.prefilledSessionData = {
-      date: sessionData.SessionDetailData.session_date,
-      startTime: sessionData.SessionDetailData.start_time.substring(0, 5),
-      sessionData: sessionData, // Add the full session data for editing
-    };
-    this.showNewSessionDialog.set(true);
+    // Check if this is a call or a session
+    const isCall = sessionData.SessionDetailData.is_call;
+
+    if (isCall) {
+      // Open call dialog for editing
+      const callData = sessionData.SessionDetailData.CallData;
+      this.prefilledCallData = {
+        id: sessionData.SessionDetailData.session_id,
+        call_first_name: callData?.call_first_name || '',
+        call_last_name: callData?.call_last_name || '',
+        call_phone: callData?.call_phone || '',
+        session_date: sessionData.SessionDetailData.session_date,
+        start_time: sessionData.SessionDetailData.start_time.substring(0, 5),
+        end_time: sessionData.SessionDetailData.end_time.substring(0, 5),
+        notes: sessionData.SessionDetailData.notes || '',
+        is_billable_call: callData?.is_billable_call || false,
+        call_dni: callData?.call_dni,
+        call_billing_address: callData?.call_billing_address,
+        price: sessionData.SessionDetailData.price,
+        payment_method: sessionData.SessionDetailData.payment_method as 'transferencia' | 'bizum',
+      };
+      this.showNewCallDialog.set(true);
+    } else {
+      // Open session dialog for editing (existing behavior)
+      this.prefilledSessionData = {
+        date: sessionData.SessionDetailData.session_date,
+        startTime: sessionData.SessionDetailData.start_time.substring(0, 5),
+        sessionData: sessionData,
+      };
+      this.showNewSessionDialog.set(true);
+    }
   }
 
   onNewSessionClick(): void {
@@ -298,7 +322,12 @@ export class CalendarComponent implements OnInit {
   }
 
   getPatientNameFromSessionData(sessionData: SessionData): string {
-    return sessionData.SessionDetailData.PatientData.name;
+    // Check if this is a call
+    if (sessionData.SessionDetailData.is_call && sessionData.SessionDetailData.CallData) {
+      const callData = sessionData.SessionDetailData.CallData;
+      return `${callData.call_first_name} ${callData.call_last_name}`;
+    }
+    return sessionData.SessionDetailData.PatientData.name || 'Sin nombre';
   }
 
   getClinicNameFromSessionData(sessionData: SessionData): string {
@@ -860,8 +889,15 @@ export class CalendarComponent implements OnInit {
     notes: string;
   } {
     const session = sessionData.SessionDetailData;
+    let patientName = session.PatientData.name || 'Sin nombre';
+
+    // If it's a call, use call data
+    if (session.is_call && session.CallData) {
+      patientName = `${session.CallData.call_first_name} ${session.CallData.call_last_name}`;
+    }
+
     return {
-      patientName: session.PatientData.name,
+      patientName,
       time: `${this.formatTime(session.start_time)} - ${this.formatTime(session.end_time)}`,
       clinic: session.ClinicDetailData.clinic_name || 'Sin clínica',
       status: this.getSessionStatusText(sessionData),

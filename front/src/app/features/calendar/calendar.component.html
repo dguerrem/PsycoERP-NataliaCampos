@@ -989,6 +989,7 @@
 @if (showNewCallDialog()) {
 <app-new-call-dialog
   [prefilledData]="prefilledCallData"
+  [isEditMode]="prefilledCallData?.id !== undefined"
   (close)="onCloseNewCallDialog()"
   (callDataCreated)="onCallDataCreated($event)"
   (callDeleted)="onCallDeleted($event)"

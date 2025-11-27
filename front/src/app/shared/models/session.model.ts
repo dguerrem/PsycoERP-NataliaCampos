@@ -28,7 +28,7 @@ export interface SessionData {
     start_time: string; // "09:00:00"
     end_time: string; // "10:00:00"
     type: string; // "Terapia Individual"
-    mode: 'online' | 'presencial'; // Added mode to new DTO
+    mode: 'online' | 'presencial' | null; // Added mode to new DTO
     price: number; // 60
     net_price: number; // Price after applying clinic percentage
     payment_method:
@@ -43,19 +43,28 @@ export interface SessionData {
     no_show: boolean; // true/false - to handle no-show sessions
     sended: boolean; // true/false - to handle reminder sent status
     invoiced: boolean; // true/false - to handle invoiced sessions
-    notes?: string; // "Primera sesión del paciente"
+    notes?: string | null; // "Primera sesión del paciente"
     created_at: string; // ISO timestamp
     price_brute: number; // Price before applying clinic percentage
     updated_at: string; // ISO timestamp
+    is_call: boolean; // Flag to differentiate between calls and sessions
     PatientData: {
-      id: number; // 1
-      name: string; // "Juan Pérez García"
+      id: number | null; // 1 - null for calls
+      name: string | null; // "Juan Pérez García" - null for calls
     };
     ClinicDetailData: {
       clinic_id: number | null; // 1
       clinic_name: string | null; // "Clínica Psicológica Centro"
       clinic_color: string | null; // Color for clinic display
       clinic_percentage: number | null; // Percentage for clinic billing
+    };
+    CallData?: {
+      call_first_name: string;
+      call_last_name: string;
+      call_phone: string;
+      is_billable_call: boolean;
+      call_dni?: string;
+      call_billing_address?: string;
     };
     MedicalRecordData: Array<{
       title: string; // "Sesión inicial de evaluación"

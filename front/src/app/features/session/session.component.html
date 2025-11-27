@@ -220,11 +220,16 @@
               } @else {
               @for (session of sessions(); track session.SessionDetailData.session_id) {
               <tr class="hover:bg-muted/50 border-b transition-colors">
-                <td class="p-2 font-medium">{{ session.SessionDetailData.PatientData.name }}</td>
+                <td class="p-2 font-medium">
+                  {{ getDisplayName(session) }}
+                  @if (session.SessionDetailData.is_call) {
+                    <span class="ml-1 text-xs text-orange-600">(Llamada)</span>
+                  }
+                </td>
                 <td class="p-2">
-                  <span [class]="getModeClass(session.SessionDetailData.mode)"
+                  <span [class]="getModeClassForDisplay(session.SessionDetailData.mode, session.SessionDetailData.is_call)"
                     class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize">
-                    {{ session.SessionDetailData.mode }}
+                    {{ getModeText(session.SessionDetailData.mode, session.SessionDetailData.is_call) }}
                   </span>
                 </td>
                 <td class="p-2">{{ formatDate(session.SessionDetailData.session_date) }}</td>

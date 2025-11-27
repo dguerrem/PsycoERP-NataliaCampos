@@ -27,6 +27,13 @@ const getSessions = async (db, filters = {}) => {
         s.payment_method,
         s.notes,
         s.invoiced,
+        s.is_call,
+        s.call_first_name,
+        s.call_last_name,
+        s.call_phone,
+        s.is_billable_call,
+        s.call_dni,
+        s.call_billing_address,
         p.id AS patient_id,
         CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
         c.id AS clinic_id,
@@ -118,7 +125,7 @@ const getSessions = async (db, filters = {}) => {
         }
       }
 
-      return {
+      const sessionDetail = {
         SessionDetailData: {
           session_id: row.session_id,
           session_date: row.session_date,
@@ -131,6 +138,7 @@ const getSessions = async (db, filters = {}) => {
           payment_method: row.payment_method,
           notes: row.notes,
           invoiced: row.invoiced === 1,
+          is_call: row.is_call === 1,
           PatientData: {
             id: row.patient_id,
             name: row.patient_name,
@@ -143,6 +151,20 @@ const getSessions = async (db, filters = {}) => {
           }
         },
       };
+
+      // Si es una llamada, añadir CallData
+      if (row.is_call === 1) {
+        sessionDetail.SessionDetailData.CallData = {
+          call_first_name: row.call_first_name,
+          call_last_name: row.call_last_name,
+          call_phone: row.call_phone,
+          is_billable_call: row.is_billable_call === 1,
+          call_dni: row.is_billable_call === 1 ? row.call_dni : null,
+          call_billing_address: row.is_billable_call === 1 ? row.call_billing_address : null,
+        };
+      }
+
+      return sessionDetail;
     })
   );
 

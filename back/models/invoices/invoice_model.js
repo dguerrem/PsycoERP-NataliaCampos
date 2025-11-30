@@ -306,6 +306,13 @@ const getIssuedInvoices = async (db, filters = {}) => {
        p.email,
        CONCAT_WS(' ', p.street, p.street_number, p.door) as patient_address_line1,
        CONCAT_WS(' ', p.city, p.postal_code) as patient_address_line2,
+       p.is_minor,
+       p.progenitor1_full_name,
+       p.progenitor1_dni,
+       p.progenitor1_phone,
+       p.progenitor2_full_name,
+       p.progenitor2_dni,
+       p.progenitor2_phone,
        i.total,
        i.concept,
        i.month,
@@ -339,7 +346,7 @@ const getIssuedInvoices = async (db, filters = {}) => {
       const date = new Date(row.invoice_date);
       const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 
-      return {
+      const invoice = {
         id: parseInt(row.id),
         invoice_number: row.invoice_number,
         invoice_date: formattedDate,
@@ -358,6 +365,24 @@ const getIssuedInvoices = async (db, filters = {}) => {
         total: parseFloat(row.total) || 0,
         concept: row.concept || ''
       };
+
+      // Si el paciente es menor de edad, añadir información de progenitores
+      if (row.is_minor === 1) {
+        invoice.progenitors_data = {
+          progenitor1: {
+            full_name: row.progenitor1_full_name || null,
+            dni: row.progenitor1_dni || null,
+            phone: row.progenitor1_phone || null
+          },
+          progenitor2: {
+            full_name: row.progenitor2_full_name || null,
+            dni: row.progenitor2_dni || null,
+            phone: row.progenitor2_phone || null
+          }
+        };
+      }
+
+      return invoice;
     })
   );
 

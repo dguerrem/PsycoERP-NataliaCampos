@@ -4,7 +4,7 @@ const invoicesPaths = {
       tags: ["Invoices"],
       summary: "Obtener facturas emitidas",
       description:
-        "Obtiene el listado de facturas emitidas con información completa del paciente (incluyendo dirección), detalles de cada sesión facturada (ID, fecha, precio), número de sesiones y total. Si no se especifica mes/año, usa el mes y año actual.",
+        "Obtiene el listado de facturas emitidas con información completa del paciente (incluyendo dirección), detalles de cada sesión facturada (ID, fecha, precio), número de sesiones y total. Si el paciente es menor de edad (is_minor = 1), incluye información de los progenitores para facturación. Si no se especifica mes/año, usa el mes y año actual.",
       parameters: [
         {
           name: "month",

@@ -661,7 +661,7 @@ const invoicesPaths = {
       tags: ["Invoices"],
       summary: "Obtener sesiones pendientes de facturar",
       description:
-        "Obtiene las sesiones pendientes de facturar agrupadas por paciente. Incluye información del paciente (incluyendo dirección), detalles completos de cada sesión (ID, fecha, precio), número de sesiones y total bruto. Si no se especifica mes/año, usa el mes y año actual.",
+        "Obtiene las sesiones pendientes de facturar agrupadas por paciente. Incluye información del paciente (incluyendo dirección), detalles completos de cada sesión (ID, fecha, precio), número de sesiones y total bruto. Si el paciente es menor de edad (is_minor = 1), incluye información de los progenitores para facturación. Si no se especifica mes/año, usa el mes y año actual.",
       parameters: [
         {
           name: "month",

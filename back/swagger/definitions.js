@@ -1854,6 +1854,58 @@ const definitions = {
                   description: "Total bruto a facturar",
                   example: 240.00,
                 },
+                progenitors_data: {
+                  type: "object",
+                  description: "Información de progenitores (solo si el paciente es menor de edad, is_minor = 1)",
+                  properties: {
+                    progenitor1: {
+                      type: "object",
+                      properties: {
+                        full_name: {
+                          type: "string",
+                          nullable: true,
+                          description: "Nombre completo del progenitor 1",
+                          example: "María López García",
+                        },
+                        dni: {
+                          type: "string",
+                          nullable: true,
+                          description: "DNI del progenitor 1",
+                          example: "87654321B",
+                        },
+                        phone: {
+                          type: "string",
+                          nullable: true,
+                          description: "Teléfono del progenitor 1",
+                          example: "+34666777888",
+                        },
+                      },
+                    },
+                    progenitor2: {
+                      type: "object",
+                      properties: {
+                        full_name: {
+                          type: "string",
+                          nullable: true,
+                          description: "Nombre completo del progenitor 2",
+                          example: "Juan Pérez Sánchez",
+                        },
+                        dni: {
+                          type: "string",
+                          nullable: true,
+                          description: "DNI del progenitor 2",
+                          example: "12348765C",
+                        },
+                        phone: {
+                          type: "string",
+                          nullable: true,
+                          description: "Teléfono del progenitor 2",
+                          example: "+34655444333",
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
           },

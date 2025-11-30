@@ -761,7 +761,7 @@ export class BillingComponent implements OnInit {
     const previewData: InvoicePreviewData = {
       patient_full_name: invoice.patient_full_name,
       dni: invoice.dni,
-      email: '', // No disponible en ExistingInvoice
+      email: invoice.email,
       pending_sessions_count: invoice.sessions_count,
       total_gross: invoice.total,
       invoice_number: invoice.invoice_number,

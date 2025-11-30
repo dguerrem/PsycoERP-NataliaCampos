@@ -5,54 +5,63 @@ import {
   Output,
   signal,
   effect,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReusableModalComponent } from '../../../../shared/components/reusable-modal/reusable-modal.component';
+import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { CallsService } from '../../services/calls.service';
 
 export interface CallData {
   id?: number;
-  patientFirstName: string;
-  patientLastName: string;
-  patientPhone: string;
-  sessionDate: string;
-  startTime: string;
-  endTime: string;
+  call_first_name: string;
+  call_last_name: string;
+  call_phone: string;
+  session_date: string;
+  start_time: string;
+  end_time: string;
   notes: string;
-  hasPaidCall: boolean;
-  dniNie?: string;
-  billingAddress?: string;
+  is_billable_call: boolean;
+  call_dni?: string;
+  call_billing_address?: string;
   price?: number;
+  payment_method?: 'transferencia' | 'bizum';
 }
 
 @Component({
   selector: 'app-new-call-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReusableModalComponent],
+  imports: [CommonModule, FormsModule, ReusableModalComponent, ConfirmationModalComponent],
   templateUrl: './new-call-dialog.component.html',
   styleUrls: ['./new-call-dialog.component.scss'],
 })
 export class NewCallDialogComponent {
+  private callsService = inject(CallsService);
+
   @Input() prefilledData?: Partial<CallData> | null;
   @Input() isEditMode: boolean = false;
   @Output() close = new EventEmitter<void>();
   @Output() callDataCreated = new EventEmitter<CallData>();
+  @Output() callDeleted = new EventEmitter<number>();
 
   protected formData = signal<CallData>({
-    patientFirstName: '',
-    patientLastName: '',
-    patientPhone: '',
-    sessionDate: '',
-    startTime: '',
-    endTime: '',
+    call_first_name: '',
+    call_last_name: '',
+    call_phone: '',
+    session_date: '',
+    start_time: '',
+    end_time: '',
     notes: '',
-    hasPaidCall: false,
-    dniNie: '',
-    billingAddress: '',
+    is_billable_call: false,
+    call_dni: '',
+    call_billing_address: '',
     price: undefined,
+    payment_method: undefined,
   });
 
   protected isFormValid = signal<boolean>(false);
+  protected showDeleteConfirmation = signal<boolean>(false);
 
   constructor() {
     // Update form validity whenever formData changes
@@ -60,23 +69,24 @@ export class NewCallDialogComponent {
       () => {
         const data = this.formData();
         let isValid = !!(
-          data.patientFirstName &&
-          data.patientLastName &&
-          data.patientPhone &&
-          data.sessionDate &&
-          data.startTime &&
-          data.endTime
+          data.call_first_name &&
+          data.call_last_name &&
+          data.call_phone &&
+          data.session_date &&
+          data.start_time &&
+          data.end_time
         );
 
-        // Si tiene llamada con precio, validar campos adicionales
-        if (data.hasPaidCall) {
+        // Si tiene llamada facturable, validar campos adicionales
+        if (data.is_billable_call) {
           isValid =
             isValid &&
             !!(
-              data.dniNie &&
-              data.billingAddress &&
+              data.call_dni &&
+              data.call_billing_address &&
               data.price !== undefined &&
-              data.price > 0
+              data.price > 0 &&
+              data.payment_method
             );
         }
 
@@ -89,12 +99,12 @@ export class NewCallDialogComponent {
   ngOnInit() {
     if (this.prefilledData) {
       const dataToSet = { ...this.formData(), ...this.prefilledData };
-      
-      // Si hay startTime pero no endTime, calcular automáticamente endTime
-      if (dataToSet.startTime && !dataToSet.endTime) {
-        dataToSet.endTime = this.calculateEndTime(dataToSet.startTime);
+
+      // Si hay start_time pero no end_time, calcular automáticamente end_time
+      if (dataToSet.start_time && !dataToSet.end_time) {
+        dataToSet.end_time = this.calculateEndTime(dataToSet.start_time);
       }
-      
+
       this.formData.set(dataToSet);
     }
   }
@@ -107,10 +117,10 @@ export class NewCallDialogComponent {
       [field]: value,
     };
 
-    // Si se actualiza startTime, calcular automáticamente endTime (+30 minutos)
-    if (field === 'startTime' && typeof value === 'string' && value) {
+    // Si se actualiza start_time, calcular automáticamente end_time (+30 minutos)
+    if (field === 'start_time' && typeof value === 'string' && value) {
       const endTime = this.calculateEndTime(value);
-      updatedData.endTime = endTime;
+      updatedData.end_time = endTime;
     }
 
     this.formData.set({
@@ -144,10 +154,10 @@ export class NewCallDialogComponent {
     }
   }
 
-  protected togglePaidCall() {
+  protected toggleBillableCall() {
     this.formData.set({
       ...this.formData(),
-      hasPaidCall: !this.formData().hasPaidCall,
+      is_billable_call: !this.formData().is_billable_call,
     });
   }
 
@@ -157,8 +167,46 @@ export class NewCallDialogComponent {
 
   protected onSubmit() {
     if (this.isFormValid()) {
-      this.callDataCreated.emit(this.formData());
-      this.onClose();
+      const callData = this.formData();
+
+      if (this.isEditMode && callData.id) {
+        // Actualizar llamada existente
+        this.callsService.updateCall(callData.id, callData).subscribe({
+          next: (updatedCall) => {
+            this.callDataCreated.emit(updatedCall);
+            this.onClose();
+          },
+        });
+      } else {
+        // Crear nueva llamada
+        this.callsService.createCall(callData).subscribe({
+          next: (newCall) => {
+            this.callDataCreated.emit(newCall);
+            this.onClose();
+          },
+        });
+      }
+    }
+  }
+
+  protected openDeleteConfirmation() {
+    this.showDeleteConfirmation.set(true);
+  }
+
+  protected closeDeleteConfirmation() {
+    this.showDeleteConfirmation.set(false);
+  }
+
+  protected handleDeleteCall() {
+    const callData = this.formData();
+    if (callData.id) {
+      this.callsService.deleteCall(callData.id).subscribe({
+        next: () => {
+          this.callDeleted.emit(callData.id);
+          this.closeDeleteConfirmation();
+          this.onClose();
+        },
+      });
     }
   }
 

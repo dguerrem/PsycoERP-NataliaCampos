@@ -351,7 +351,10 @@ export class SessionComponent implements OnInit {
     return texts[status as keyof typeof texts] || status;
   }
 
-  getModeClass(mode: string): string {
+  getModeClass(mode: string | null): string {
+    if (!mode) {
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
     const classes = {
       presencial: 'bg-blue-100 text-blue-800 border-blue-200',
       online: 'bg-purple-100 text-purple-800 border-purple-200',
@@ -511,5 +514,47 @@ export class SessionComponent implements OnInit {
       return 0;
     }
     return price - netPrice;
+  }
+
+  /**
+   * Gets the display name for a session or call
+   * @param session The session data
+   * @returns The patient name for sessions or call name for calls
+   */
+  getDisplayName(session: SessionData): string {
+    if (session.SessionDetailData.is_call && session.SessionDetailData.CallData) {
+      const callData = session.SessionDetailData.CallData;
+      return `${callData.call_first_name} ${callData.call_last_name}`;
+    }
+    return session.SessionDetailData.PatientData.name || 'Sin nombre';
+  }
+
+  /**
+   * Gets the mode text for display
+   * @param mode The session mode
+   * @param isCall Whether this is a call
+   * @returns The formatted mode text
+   */
+  getModeText(mode: string | null, isCall: boolean): string {
+    if (isCall) {
+      return 'Llamada';
+    }
+    if (!mode) {
+      return 'N/A';
+    }
+    return mode.charAt(0).toUpperCase() + mode.slice(1);
+  }
+
+  /**
+   * Gets CSS classes for mode badge, handling calls
+   * @param mode The session mode
+   * @param isCall Whether this is a call
+   * @returns The CSS classes
+   */
+  getModeClassForDisplay(mode: string | null, isCall: boolean): string {
+    if (isCall) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    }
+    return this.getModeClass(mode);
   }
 }

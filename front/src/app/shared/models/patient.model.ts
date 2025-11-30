@@ -37,6 +37,14 @@ export interface Patient {
   // Campos calculados/automáticos
   is_minor: boolean;
 
+  // Información de progenitores (solo para menores de edad)
+  progenitor1_full_name?: string;
+  progenitor1_dni?: string;
+  progenitor1_phone?: string;
+  progenitor2_full_name?: string;
+  progenitor2_dni?: string;
+  progenitor2_phone?: string;
+
   // Timestamps del sistema
   created_at?: string; // ISO string format
   updated_at?: string; // ISO string format

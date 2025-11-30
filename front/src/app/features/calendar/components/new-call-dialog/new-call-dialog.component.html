@@ -6,12 +6,14 @@
       ? 'Actualiza la información de la llamada'
       : 'Registra una nueva llamada de un paciente'
   "
-  [submitText]="isEditMode ? 'Actualizar' : 'Guardar'"
+  [submitText]="'Guardar'"
   [isFormValid]="isFormValid()"
   [actionType]="isEditMode ? 'edit' : 'create'"
   [modalType]="'call'"
+  [deleteButtonText]="isEditMode ? 'Borrar llamada' : null"
   (onSubmit)="onSubmit()"
   (onCancel)="onClose()"
+  (onDeleteSession)="openDeleteConfirmation()"
 >
   <div class="p-4 sm:p-6 space-y-6">
     <!-- Información del paciente -->
@@ -48,9 +50,9 @@
           <input
             type="text"
             id="firstName"
-            [value]="formData().patientFirstName"
+            [value]="formData().call_first_name"
             (input)="
-              updateFormField('patientFirstName', $any($event.target).value)
+              updateFormField('call_first_name', $any($event.target).value)
             "
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Ej: Juan"
@@ -68,9 +70,9 @@
           <input
             type="text"
             id="lastName"
-            [value]="formData().patientLastName"
+            [value]="formData().call_last_name"
             (input)="
-              updateFormField('patientLastName', $any($event.target).value)
+              updateFormField('call_last_name', $any($event.target).value)
             "
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Ej: Pérez García"
@@ -90,8 +92,8 @@
           <input
             type="tel"
             id="phone"
-            [value]="formData().patientPhone"
-            (input)="updateFormField('patientPhone', $any($event.target).value)"
+            [value]="formData().call_phone"
+            (input)="updateFormField('call_phone', $any($event.target).value)"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Ej: +34 612 345 678"
             required
@@ -133,8 +135,8 @@
         <input
           type="date"
           id="sessionDate"
-          [value]="formData().sessionDate"
-          (input)="updateFormField('sessionDate', $any($event.target).value)"
+          [value]="formData().session_date"
+          (input)="updateFormField('session_date', $any($event.target).value)"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
           required
         />
@@ -151,8 +153,8 @@
           <input
             type="time"
             id="startTime"
-            [value]="formData().startTime"
-            (input)="updateFormField('startTime', $any($event.target).value)"
+            [value]="formData().start_time"
+            (input)="updateFormField('start_time', $any($event.target).value)"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             required
           />
@@ -168,92 +170,118 @@
           <input
             type="time"
             id="endTime"
-            [value]="formData().endTime"
-            (input)="updateFormField('endTime', $any($event.target).value)"
+            [value]="formData().end_time"
+            (input)="updateFormField('end_time', $any($event.target).value)"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
             required
           />
         </div>
       </div>
 
-      <!-- Checkbox Llamada con precio -->
+      <!-- Checkbox Llamada facturable -->
       <div class="flex items-center gap-3">
         <input
           type="checkbox"
-          id="hasPaidCall"
-          [checked]="formData().hasPaidCall"
-          (change)="togglePaidCall()"
+          id="isBillableCall"
+          [checked]="formData().is_billable_call"
+          (change)="toggleBillableCall()"
           class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary"
         />
         <label
-          for="hasPaidCall"
+          for="isBillableCall"
           class="text-sm font-medium text-gray-900 cursor-pointer select-none"
         >
-          Llamada con precio
+          Llamada facturable
         </label>
       </div>
 
-      <!-- Campos condicionales cuando hasPaidCall es true -->
-      @if (formData().hasPaidCall) {
+      <!-- Campos condicionales cuando is_billable_call es true -->
+      @if (formData().is_billable_call) {
       <div class="space-y-4">
-        <div>
-          <label
-            for="dniNie"
-            class="block text-sm font-medium text-gray-700 mb-1"
-          >
-            DNI / NIE <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="dniNie"
-            [value]="formData().dniNie || ''"
-            (input)="updateFormField('dniNie', $any($event.target).value)"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Ej: 12345678A"
-            required
-          />
+        <!-- Row 1: DNI y Dirección de facturación -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="callDni"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              DNI / NIE <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="callDni"
+              [value]="formData().call_dni || ''"
+              (input)="updateFormField('call_dni', $any($event.target).value)"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Ej: 12345678A"
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              for="billingAddress"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Dirección facturación <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="billingAddress"
+              [value]="formData().call_billing_address || ''"
+              (input)="
+                updateFormField('call_billing_address', $any($event.target).value)
+              "
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Ej: Calle Mayor 123, 28001 Madrid"
+              required
+            />
+          </div>
         </div>
 
-        <div>
-          <label
-            for="billingAddress"
-            class="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Dirección facturación <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="billingAddress"
-            [value]="formData().billingAddress || ''"
-            (input)="
-              updateFormField('billingAddress', $any($event.target).value)
-            "
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Ej: Calle Mayor 123, 28001 Madrid"
-            required
-          />
-        </div>
+        <!-- Row 2: Precio y Método de pago -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="price"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Precio (€) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="price"
+              [value]="formData().price || ''"
+              (input)="
+                updateFormField('price', parseNumber($any($event.target).value))
+              "
+              min="0"
+              step="0.01"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Ej: 60.00"
+              required
+            />
+          </div>
 
-        <div>
-          <label
-            for="price"
-            class="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Precio (€) <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            id="price"
-            [value]="formData().price || ''"
-            (input)="
-              updateFormField('price', parseNumber($any($event.target).value))
-            "
-            min="0"
-            step="0.01"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Ej: 60.00"
-            required
-          />
+          <div>
+            <label
+              for="paymentMethod"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Método de pago <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="paymentMethod"
+              [value]="formData().payment_method || ''"
+              (change)="updateFormField('payment_method', $any($event.target).value)"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              required
+            >
+              <option value="" disabled>Selecciona un método</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="bizum">Bizum</option>
+            </select>
+          </div>
         </div>
       </div>
       }
@@ -296,3 +324,16 @@
     </div>
   </div>
 </app-reusable-modal>
+
+<!-- Modal de confirmación para eliminar -->
+<app-confirmation-modal
+  [isOpen]="showDeleteConfirmation()"
+  title="Confirmar Eliminación"
+  message="¿Estás seguro de que quieres eliminar la llamada? No se podrá recuperar"
+  confirmText="Eliminar"
+  cancelText="Cancelar"
+  confirmButtonType="destructive"
+  (onConfirm)="handleDeleteCall()"
+  (onCancel)="closeDeleteConfirmation()"
+>
+</app-confirmation-modal>

@@ -246,6 +246,9 @@ export class NewSessionFormComponent implements OnInit {
 
     const patientId = sessionData.SessionDetailData.PatientData.id;
 
+    // Skip loading clinical notes if patient_id is null (for calls)
+    if (patientId === null) return;
+
     // Load clinical notes from API
     this.clinicalNotesService.getClinicalNotes(patientId).subscribe({
       next: (response: any) => {
@@ -369,7 +372,7 @@ export class NewSessionFormComponent implements OnInit {
           session_date: sessionData!.SessionDetailData.session_date,
           start_time: sessionData!.SessionDetailData.start_time.substring(0, 5),
           end_time: sessionData!.SessionDetailData.end_time.substring(0, 5),
-          mode: sessionData!.SessionDetailData.mode.toLowerCase(),
+          mode: sessionData!.SessionDetailData.mode?.toLowerCase() || '',
           base_price: 0,
           payment_method:
             sessionData!.SessionDetailData.payment_method || 'pendiente',
@@ -804,6 +807,12 @@ export class NewSessionFormComponent implements OnInit {
     }
 
     const patientId = sessionData.SessionDetailData.PatientData.id;
+
+    // Cannot save clinical notes for calls (patient_id is null)
+    if (patientId === null) {
+      this.toastService.showError('No se pueden guardar notas clínicas para llamadas');
+      return;
+    }
 
     this.isSavingNote.set(true);
 

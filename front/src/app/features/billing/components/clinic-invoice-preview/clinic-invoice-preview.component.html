@@ -33,56 +33,73 @@
       <div id="clinic-invoice-content" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-sm">
 
         <!-- Invoice Header -->
-        <div class="mb-8">
+        <div class="mb-12">
           <div class="flex justify-between items-start">
-            <div>
-              <h1 class="text-4xl font-black text-primary">FACTURA</h1>
-              <div class="text-xl font-bold text-gray-800 mt-2">{{ clinicInvoiceData.invoice_number }}</div>
+            <!-- Logo en esquina superior izquierda -->
+            <div class="flex-shrink-0">
+              <img src="assets/logo/logo.png" alt="Natalia Campos - Psicóloga" class="w-32 h-32 sm:w-36 sm:h-36 rounded-full object-cover">
             </div>
-            <div class="text-right">
-              <div class="text-lg font-semibold text-gray-600">Fecha</div>
-              <div class="text-xl font-bold text-gray-800">{{ formatDate(clinicInvoiceData.invoice_date) }}</div>
+
+            <!-- Número de factura y fecha en esquina superior derecha -->
+            <div class="text-right space-y-2">
+              <div class="text-sm font-medium text-gray-900">
+                <span class="text-gray-600 uppercase tracking-wider">N°FACTURA:</span>
+                <span class="ml-2 font-bold">{{ clinicInvoiceData.invoice_number }}</span>
+              </div>
+              <div class="text-sm font-medium text-gray-900">
+                <span class="text-gray-600 uppercase tracking-wider">FECHA:</span>
+                <span class="ml-2 font-semibold">{{ formatDate(clinicInvoiceData.invoice_date) }}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Facturar a -->
+        <!-- De / Para -->
         <div class="mb-8">
-          <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">FACTURAR A</h3>
-          <div class="space-y-1 text-gray-700">
-            <div class="font-bold text-xl text-gray-900">{{ clinicInvoiceData.fiscal_name }}</div>
-            <div>{{ clinicInvoiceData.billing_address.toUpperCase() }}</div>
-            <div class="font-medium">{{ clinicInvoiceData.cif }}</div>
-          </div>
-        </div>
-
-        <!-- Datos del Receptor -->
-        <div class="mb-8">
-          <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">DATOS DEL RECEPTOR</h3>
-          @if (userData) {
-          <div class="space-y-1 text-gray-700">
-            <div class="font-bold text-lg text-gray-900">{{ userData.name }}</div>
-            @if (userData.dni) {
-            <div class="font-medium">{{ userData.dni }}</div>
-            }
-            @if (userData.license_number) {
-            <div class="font-medium">Nº Colegiado: {{ userData.license_number }}</div>
-            }
-            @if (userData.street) {
-            <div>{{ userData.street }}@if (userData.street_number) {, {{ userData.street_number }}}@if (userData.door) {, {{ userData.door }}}</div>
-            }
-            @if (userData.postal_code || userData.city || userData.province) {
+          <div class="grid grid-cols-2 gap-8">
+            <!-- De (Datos del Emisor) -->
             <div>
-              @if (userData.postal_code) {{{ userData.postal_code }} }
-              @if (userData.city) {{{ userData.city }}}@if (userData.province) {, {{ userData.province }}}
+              <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">DATOS DEL EMISOR</h3>
+              @if (userData) {
+              <div class="space-y-1 text-gray-700">
+                <div class="font-bold text-lg text-gray-900">{{ userData.name }}</div>
+                @if (userData.dni) {
+                <div class="font-medium">{{ userData.dni }}</div>
+                }
+                @if (userData.license_number) {
+                <div class="font-medium">Nº Colegiado: {{ userData.license_number }}</div>
+                }
+                @if (userData.street) {
+                <div>{{ userData.street }}@if (userData.street_number) {, {{ userData.street_number }}}@if (userData.door) {, {{ userData.door }}}</div>
+                }
+                @if (userData.postal_code || userData.city || userData.province) {
+                <div>
+                  @if (userData.postal_code) {{{ userData.postal_code }} }
+                  @if (userData.city) {{{ userData.city }}}@if (userData.province) {, {{ userData.province }}}
+                </div>
+                }
+              </div>
+              } @else {
+              <div class="space-y-1 text-gray-700">
+                <div class="font-semibold">Cargando...</div>
+              </div>
+              }
             </div>
-            }
+
+            <!-- Para (Facturar a) -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">DATOS DEL RECEPTOR</h3>
+              <div class="space-y-1 text-gray-700">
+                <div class="font-bold text-xl text-gray-900">{{ clinicInvoiceData.fiscal_name || clinicInvoiceData.clinic_name }}</div>
+                @if (clinicInvoiceData.billing_address) {
+                <div>{{ clinicInvoiceData.billing_address.toUpperCase() }}</div>
+                }
+                @if (clinicInvoiceData.cif) {
+                <div class="font-medium">{{ clinicInvoiceData.cif }}</div>
+                }
+              </div>
+            </div>
           </div>
-          } @else {
-          <div class="space-y-1 text-gray-700">
-            <div class="font-semibold">Cargando...</div>
-          </div>
-          }
         </div>
 
         <!-- Abono en cuenta -->
@@ -154,9 +171,19 @@
           </div>
         </div>
 
-        <!-- Nota legal IVA -->
-        <div class="text-center text-sm text-gray-500 mb-4">
-          <p>Servicio exento de IVA según el artículo 20 3a de la ley 37/1992 del impuesto sobre el Valor Añadido.</p>
+        <!-- Nota legal IVA y protección de datos -->
+        <div class="text-justify text-xs text-gray-600 leading-relaxed mb-4 space-y-2">
+          <p class="font-semibold">Factura exenta de IVA en base al artículo 20 de la Ley del IVA 37/1992</p>
+          <p>
+            <span class="font-semibold">Información sobre protección de datos:</span> Responsable: NATALIA CAMPOS LÓPEZ.
+            Finalidad: Mantenimiento de la relación y envío de información comercial. Legitimación: Relación
+            contractual e interés legítimo. Destinatarios: No se cederán datos a terceros salvo obligación legal.
+            Derechos: Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad de sus datos,
+            y la limitación u oposición al tratamiento mediante escrito acompañado de copia de documento
+            oficial que le identifique, dirigido al Responsable del tratamiento. En caso de disconformidad con el
+            tratamiento, también tiene derecho a presentar una reclamación ante la Agencia Española de
+            Protección de Datos.
+          </p>
         </div>
 
       </div>

@@ -15,14 +15,23 @@ import { InvoicePreviewData } from './invoice-preview.component';
     @if (invoiceData) {
       <div class="max-w-4xl mx-auto bg-white p-8">
         <!-- Invoice Header -->
-        <div class="mb-8">
+        <div class="mb-12">
           <div class="flex justify-between items-start">
-            <div>
-              <h1 class="text-4xl font-black text-primary">FACTURA</h1>
+            <!-- Logo en esquina superior izquierda -->
+            <div class="flex-shrink-0">
+              <img src="assets/logo/logo.png" alt="Natalia Campos - Psicóloga" class="w-32 h-32 sm:w-36 sm:h-36 rounded-full object-cover">
             </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold text-gray-800">{{ invoiceData.invoice_number }}</div>
-              <div class="text-gray-600">Fecha: {{ invoiceData.invoice_date }}</div>
+
+            <!-- Número de factura y fecha en esquina superior derecha -->
+            <div class="text-right space-y-2">
+              <div class="text-sm font-medium text-gray-900">
+                <span class="text-gray-600 uppercase tracking-wider">N°FACTURA:</span>
+                <span class="ml-2 font-bold">{{ invoiceData.invoice_number }}</span>
+              </div>
+              <div class="text-sm font-medium text-gray-900">
+                <span class="text-gray-600 uppercase tracking-wider">FECHA:</span>
+                <span class="ml-2 font-semibold">{{ formatDate(invoiceData.invoice_date) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -50,8 +59,6 @@ import { InvoicePreviewData } from './invoice-preview.component';
               <div class="font-semibold">{{ invoiceData.patient_full_name }}</div>
               <div>DNI: {{ invoiceData.dni }}</div>
               <div>Email: {{ invoiceData.email }}</div>
-              <div>Paciente de Psicología</div>
-              <div>Madrid, España</div>
             </div>
           </div>
         </div>
@@ -110,9 +117,19 @@ import { InvoicePreviewData } from './invoice-preview.component';
           </div>
         </div>
 
-        <!-- Nota legal IVA -->
-        <div class="text-center text-sm text-gray-500 mb-8">
-          <p>Servicio exento de IVA según el artículo 20 3a de la ley 37/1992 del impuesto sobre el Valor Añadido.</p>
+        <!-- Nota legal IVA y protección de datos -->
+        <div class="text-justify text-xs text-gray-600 leading-relaxed mb-8 space-y-2">
+          <p class="font-semibold">Factura exenta de IVA en base al artículo 20 de la Ley del IVA 37/1992</p>
+          <p>
+            <span class="font-semibold">Información sobre protección de datos:</span> Responsable: NATALIA CAMPOS LÓPEZ.
+            Finalidad: Mantenimiento de la relación y envío de información comercial. Legitimación: Relación
+            contractual e interés legítimo. Destinatarios: No se cederán datos a terceros salvo obligación legal.
+            Derechos: Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad de sus datos,
+            y la limitación u oposición al tratamiento mediante escrito acompañado de copia de documento
+            oficial que le identifique, dirigido al Responsable del tratamiento. En caso de disconformidad con el
+            tratamiento, también tiene derecho a presentar una reclamación ante la Agencia Española de
+            Protección de Datos.
+          </p>
         </div>
       </div>
     }
@@ -128,5 +145,20 @@ export class InvoiceTemplateComponent {
       style: 'currency',
       currency: 'EUR'
     }).format(amount);
+  }
+
+  /**
+   * Formatea una fecha en formato DD/MM/YYYY
+   * @param dateStr Fecha en formato ISO (YYYY-MM-DD) o ya formateada (DD/MM/YYYY)
+   */
+  formatDate(dateStr: string): string {
+    // Si ya está en formato DD/MM/YYYY, devolverla tal cual
+    if (dateStr.includes('/')) {
+      return dateStr;
+    }
+
+    // Si está en formato ISO (YYYY-MM-DD), convertirla a DD/MM/YYYY
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
   }
 }

@@ -161,6 +161,31 @@ const definitions = {
         description: "Fecha de última actualización",
         example: "2025-01-20",
       },
+      usage_history: {
+        type: "array",
+        description: "Historial de usos del bono",
+        items: {
+          $ref: "#/components/schemas/BonusUsageData",
+        },
+      },
+    },
+  },
+
+  BonusUsageData: {
+    type: "object",
+    properties: {
+      usage_date: {
+        type: "string",
+        format: "date",
+        description: "Fecha de uso del bono (fecha de la sesión)",
+        example: "2025-01-18",
+      },
+      session_status: {
+        type: "string",
+        enum: ["scheduled", "completed", "cancelled", "no-show"],
+        description: "Estado de la sesión",
+        example: "completed",
+      },
     },
   },
 

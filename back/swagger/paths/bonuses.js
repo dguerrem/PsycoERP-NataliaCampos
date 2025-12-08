@@ -58,12 +58,55 @@ const bonusesPaths = {
             ],
             responses: {
                 200: {
-                    description: "Lista de bonuses obtenida exitosamente",
+                    description: "Lista de bonuses obtenida exitosamente (incluye historial de usos de cada bono)",
                     content: {
                         "application/json": {
                             schema: {
                                 $ref: "#/components/schemas/BonusesResponse",
                             },
+                            example: {
+                                success: true,
+                                pagination: {
+                                    currentPage: 1,
+                                    totalPages: 2,
+                                    totalRecords: 15,
+                                    recordsPerPage: 10,
+                                    hasNextPage: true,
+                                    hasPrevPage: false,
+                                    nextPage: 2,
+                                    prevPage: null,
+                                },
+                                data: [
+                                    {
+                                        id: 1,
+                                        patient_id: 5,
+                                        patient_name: "Juan Pérez García",
+                                        sessions_number: 10,
+                                        price_per_session: 50.00,
+                                        total_price: 500.00,
+                                        remaining_sessions: 7,
+                                        used_sessions: 3,
+                                        status: "active",
+                                        expiration_date: "2025-12-31",
+                                        created_at: "2025-01-15",
+                                        updated_at: "2025-01-20",
+                                        usage_history: [
+                                            {
+                                                usage_date: "2025-01-20",
+                                                session_status: "completed"
+                                            },
+                                            {
+                                                usage_date: "2025-01-18",
+                                                session_status: "completed"
+                                            },
+                                            {
+                                                usage_date: "2025-01-16",
+                                                session_status: "completed"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         },
                     },
                 },

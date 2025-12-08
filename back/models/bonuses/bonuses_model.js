@@ -74,6 +74,27 @@ const getBonuses = async (db, filters = {}) => {
 
     const [rows] = await db.execute(dataQuery, [...params, limit, offset]);
 
+    // Obtener el historial de uso para cada bono
+    const bonusIds = rows.map(row => row.id);
+    let usageHistory = [];
+
+    if (bonusIds.length > 0) {
+        const placeholders = bonusIds.map(() => '?').join(',');
+        const usageQuery = `
+            SELECT
+                s.bonus_id,
+                DATE_FORMAT(s.session_date, '%Y-%m-%d') as usage_date,
+                s.status as session_status
+            FROM sessions s
+            WHERE s.bonus_id IN (${placeholders})
+              AND s.is_active = true
+            ORDER BY s.session_date DESC
+        `;
+
+        const [usageRows] = await db.execute(usageQuery, bonusIds);
+        usageHistory = usageRows;
+    }
+
     // Transformar datos y calcular estado
     const transformedData = rows.map((row) => {
         let status = 'active';
@@ -83,6 +104,14 @@ const getBonuses = async (db, filters = {}) => {
         } else if (row.expiration_date && new Date(row.expiration_date) < new Date()) {
             status = 'expired';
         }
+
+        // Filtrar el historial de uso para este bono específico
+        const bonusUsageData = usageHistory
+            .filter(usage => usage.bonus_id === row.id)
+            .map(usage => ({
+                usage_date: usage.usage_date,
+                session_status: usage.session_status
+            }));
 
         return {
             id: row.id,
@@ -97,6 +126,7 @@ const getBonuses = async (db, filters = {}) => {
             expiration_date: row.expiration_date,
             created_at: row.created_at,
             updated_at: row.updated_at,
+            usage_history: bonusUsageData,
         };
     });
 

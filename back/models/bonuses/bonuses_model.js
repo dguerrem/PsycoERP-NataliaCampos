@@ -26,7 +26,7 @@ const getBonuses = async (db, filters = {}) => {
       DATE_FORMAT(b.updated_at, '%Y-%m-%d') as updated_at,
       CONCAT(p.first_name, ' ', p.last_name) as patient_name
     FROM bonuses b
-    LEFT JOIN patients p ON b.patient_id = p.id AND p.is_active = true
+    LEFT JOIN patients p ON b.patient_id = p.id
     WHERE b.is_active = true
   `;
 

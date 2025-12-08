@@ -3,7 +3,6 @@ const swaggerUi = require("swagger-ui-express");
 
 const definitions = require("./definitions");
 const authPaths = require("./paths/auth");
-const bonusesPaths = require("./paths/bonuses");
 const callsPaths = require("./paths/calls");
 const clinicalNotesPaths = require("./paths/clinical_notes");
 const clinicsPaths = require("./paths/clinics");
@@ -62,7 +61,6 @@ const swaggerDefinition = {
   ],
   paths: {
     ...authPaths,
-    ...bonusesPaths,
     ...callsPaths,
     ...clinicalNotesPaths,
     ...clinicsPaths,
@@ -78,10 +76,6 @@ const swaggerDefinition = {
     {
       name: "Auth",
       description: "Autenticación de usuarios prueba",
-    },
-    {
-      name: "Bonuses",
-      description: "Gestión de bonuses de pacientes",
     },
     {
       name: "Calls",

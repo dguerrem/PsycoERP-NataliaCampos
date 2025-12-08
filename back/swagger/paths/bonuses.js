@@ -237,6 +237,129 @@ const bonusesPaths = {
             },
         },
     },
+    "/api/bonuses/redeem": {
+        post: {
+            tags: ["Bonuses"],
+            summary: "Redimir un uso del bono",
+            description: "Asigna un bono activo a una sesión, actualizando el payment_method a 'bono' y decrementando el contador de sesiones disponibles del bono",
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            $ref: "#/components/schemas/RedeemBonusRequest",
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Uso del bono redimido exitosamente",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/RedeemBonusResponse",
+                            },
+                            example: {
+                                success: true,
+                                message: "Uso del bono redimido exitosamente",
+                                data: {
+                                    id: 1,
+                                    patient_id: 5,
+                                    patient_name: "Juan Pérez García",
+                                    sessions_number: 10,
+                                    price_per_session: 50.00,
+                                    total_price: 500.00,
+                                    remaining_sessions: 6,
+                                    used_sessions: 4,
+                                    status: "active",
+                                    expiration_date: "2025-12-31",
+                                    created_at: "2025-01-15",
+                                    updated_at: "2025-01-20"
+                                }
+                            }
+                        },
+                    },
+                },
+                400: {
+                    description: "Error de validación",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            examples: {
+                                missingFields: {
+                                    summary: "Campos faltantes",
+                                    value: {
+                                        success: false,
+                                        error: "Los campos patient_id y session_id son obligatorios"
+                                    }
+                                },
+                                invalidType: {
+                                    summary: "Tipo de dato inválido",
+                                    value: {
+                                        success: false,
+                                        error: "Los campos patient_id y session_id deben ser números válidos"
+                                    }
+                                }
+                            }
+                        },
+                    },
+                },
+                404: {
+                    description: "Paciente sin bono activo o sesión no encontrada",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            examples: {
+                                noActiveBonus: {
+                                    summary: "Sin bono activo",
+                                    value: {
+                                        success: false,
+                                        error: "El paciente no tiene un bono activo disponible"
+                                    }
+                                },
+                                sessionNotFound: {
+                                    summary: "Sesión no encontrada",
+                                    value: {
+                                        success: false,
+                                        error: "La sesión especificada no existe o no está activa"
+                                    }
+                                }
+                            }
+                        },
+                    },
+                },
+                409: {
+                    description: "Conflicto al actualizar el bono",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "No se pudo redimir el uso del bono. Es posible que ya no tenga sesiones disponibles"
+                            }
+                        },
+                    },
+                },
+                500: {
+                    description: "Error del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
 };
 
 module.exports = bonusesPaths;

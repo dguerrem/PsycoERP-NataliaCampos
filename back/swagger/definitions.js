@@ -262,6 +262,113 @@ const definitions = {
     },
   },
 
+  RedeemBonusRequest: {
+    type: "object",
+    required: ["patient_id", "session_id"],
+    properties: {
+      patient_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID del paciente que tiene el bono (requerido)",
+        example: 5,
+      },
+      session_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID de la sesión a la que se aplicará el bono (requerido)",
+        example: 123,
+      },
+    },
+  },
+
+  RedeemBonusResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Uso del bono redimido exitosamente",
+      },
+      data: {
+        type: "object",
+        properties: {
+          id: {
+            type: "integer",
+            format: "int64",
+            description: "ID del bono",
+            example: 1,
+          },
+          patient_id: {
+            type: "integer",
+            format: "int64",
+            description: "ID del paciente",
+            example: 5,
+          },
+          patient_name: {
+            type: "string",
+            description: "Nombre completo del paciente",
+            example: "Juan Pérez García",
+          },
+          sessions_number: {
+            type: "integer",
+            description: "Número total de sesiones del bono",
+            example: 10,
+          },
+          price_per_session: {
+            type: "number",
+            format: "decimal",
+            description: "Precio por sesión",
+            example: 50.00,
+          },
+          total_price: {
+            type: "number",
+            format: "decimal",
+            description: "Precio total del bono",
+            example: 500.00,
+          },
+          remaining_sessions: {
+            type: "integer",
+            description: "Sesiones restantes (decrementado en 1)",
+            example: 6,
+          },
+          used_sessions: {
+            type: "integer",
+            description: "Sesiones ya utilizadas (incrementado en 1)",
+            example: 4,
+          },
+          status: {
+            type: "string",
+            enum: ["active", "consumed"],
+            description: "Estado actualizado del bono",
+            example: "active",
+          },
+          expiration_date: {
+            type: "string",
+            format: "date",
+            nullable: true,
+            description: "Fecha de expiración",
+            example: "2025-12-31",
+          },
+          created_at: {
+            type: "string",
+            format: "date",
+            description: "Fecha de creación",
+            example: "2025-01-15",
+          },
+          updated_at: {
+            type: "string",
+            format: "date",
+            description: "Fecha de última actualización",
+            example: "2025-01-20",
+          },
+        },
+      },
+    },
+  },
+
   CallData: {
     type: "object",
     properties: {

@@ -1,4 +1,4 @@
-const { getBonuses, createBonus, hasActiveBonus } = require("../../models/bonuses/bonuses_model");
+const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage } = require("../../models/bonuses/bonuses_model");
 const logger = require("../../utils/logger");
 
 const obtenerBonuses = async (req, res) => {
@@ -209,7 +209,80 @@ const crearBonus = async (req, res) => {
     }
 };
 
+const redimirBono = async (req, res) => {
+    try {
+        const { patient_id, session_id } = req.body;
+
+        // Validar campos obligatorios
+        if (!patient_id || !session_id) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id son obligatorios",
+            });
+        }
+
+        // Validar que sean números
+        if (isNaN(patient_id) || isNaN(session_id)) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id deben ser números válidos",
+            });
+        }
+
+        // Validar que sean números positivos
+        if (patient_id <= 0 || session_id <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id deben ser números positivos",
+            });
+        }
+
+        // Obtener el bono activo del paciente
+        const activeBonus = await getActiveBonus(req.db, patient_id);
+
+        if (!activeBonus) {
+            return res.status(404).json({
+                success: false,
+                error: "El paciente no tiene un bono activo disponible",
+            });
+        }
+
+        // Redimir el uso del bono
+        const bonusActualizado = await redeemBonusUsage(req.db, session_id, activeBonus.id);
+
+        res.status(200).json({
+            success: true,
+            message: "Uso del bono redimido exitosamente",
+            data: bonusActualizado,
+        });
+
+    } catch (err) {
+        logger.error("Error al redimir uso del bono:", err.message);
+
+        // Manejo de errores específicos
+        if (err.message === 'SESSION_NOT_FOUND') {
+            return res.status(404).json({
+                success: false,
+                error: "La sesión especificada no existe o no está activa",
+            });
+        }
+
+        if (err.message === 'BONUS_UPDATE_FAILED') {
+            return res.status(409).json({
+                success: false,
+                error: "No se pudo redimir el uso del bono. Es posible que ya no tenga sesiones disponibles",
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: "Error al redimir el uso del bono",
+        });
+    }
+};
+
 module.exports = {
     obtenerBonuses,
     crearBonus,
+    redimirBono,
 };

@@ -137,6 +137,7 @@ const getPendingInvoices = async (db, filters = {}) => {
        AND s.is_active = true
        AND s.invoiced = 0
        AND s.payment_method != 'pendiente'
+       AND s.payment_method != 'bono'
        AND MONTH(s.session_date) = ?
        AND YEAR(s.session_date) = ?
      INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
@@ -218,11 +219,12 @@ const createInvoice = async (db, invoiceData) => {
     // 1. Obtener información de las sesiones a facturar
     const placeholders = session_ids.map(() => '?').join(',');
     const [sessionsData] = await connection.execute(
-      `SELECT id, price, session_date
+      `SELECT id, price, session_date, payment_method
        FROM sessions
        WHERE id IN (${placeholders})
          AND is_active = true
-         AND invoiced = 0`,
+         AND invoiced = 0
+         AND payment_method != 'bono'`,
       session_ids
     );
 
@@ -231,7 +233,7 @@ const createInvoice = async (db, invoiceData) => {
     }
 
     if (sessionsData.length !== session_ids.length) {
-      throw new Error('Algunas sesiones no están disponibles para facturar (ya facturadas o inactivas)');
+      throw new Error('Algunas sesiones no están disponibles para facturar (ya facturadas, inactivas o pagadas con bono)');
     }
 
     // Calcular total (suma de precios de todas las sesiones)
@@ -452,6 +454,7 @@ const getPendingInvoicesOfClinics = async (db, filters = {}) => {
        AND s.is_active = true
        AND s.invoiced = 0
        AND s.payment_method != 'pendiente'
+       AND s.payment_method != 'bono'
        AND MONTH(s.session_date) = ?
        AND YEAR(s.session_date) = ?
      INNER JOIN (
@@ -464,6 +467,7 @@ const getPendingInvoicesOfClinics = async (db, filters = {}) => {
        WHERE is_active = true
          AND invoiced = 0
          AND payment_method != 'pendiente'
+         AND payment_method != 'bono'
          AND MONTH(session_date) = ?
          AND YEAR(session_date) = ?
        GROUP BY clinic_id, price
@@ -540,6 +544,7 @@ const createInvoiceOfClinics = async (db, invoiceData) => {
          AND s.is_active = true
          AND s.invoiced = 0
          AND s.payment_method != 'pendiente'
+         AND s.payment_method != 'bono'
          AND MONTH(s.session_date) = ?
          AND YEAR(s.session_date) = ?
          AND c.is_active = true

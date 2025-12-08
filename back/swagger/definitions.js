@@ -89,6 +89,100 @@ const definitions = {
     },
   },
 
+  Bonus: {
+    type: "object",
+    properties: {
+      id: {
+        type: "integer",
+        format: "int64",
+        description: "ID único del bono",
+        example: 1,
+      },
+      patient_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID del paciente",
+        example: 5,
+      },
+      patient_name: {
+        type: "string",
+        description: "Nombre completo del paciente",
+        example: "Juan Pérez García",
+      },
+      sessions_number: {
+        type: "integer",
+        description: "Número total de sesiones incluidas en el bono",
+        example: 10,
+      },
+      price_per_session: {
+        type: "number",
+        format: "decimal",
+        description: "Precio por sesión en euros",
+        example: 50.00,
+      },
+      total_price: {
+        type: "number",
+        format: "decimal",
+        description: "Precio total del bono",
+        example: 500.00,
+      },
+      remaining_sessions: {
+        type: "integer",
+        description: "Sesiones restantes del bono",
+        example: 7,
+      },
+      used_sessions: {
+        type: "integer",
+        description: "Sesiones ya utilizadas",
+        example: 3,
+      },
+      status: {
+        type: "string",
+        enum: ["active", "consumed", "expired"],
+        description: "Estado del bono (active: tiene sesiones y no expirado, consumed: sin sesiones, expired: expirado con sesiones)",
+        example: "active",
+      },
+      expiration_date: {
+        type: "string",
+        format: "date",
+        nullable: true,
+        description: "Fecha de expiración del bono (YYYY-MM-DD)",
+        example: "2025-12-31",
+      },
+      created_at: {
+        type: "string",
+        format: "date",
+        description: "Fecha de creación",
+        example: "2025-01-15",
+      },
+      updated_at: {
+        type: "string",
+        format: "date",
+        description: "Fecha de última actualización",
+        example: "2025-01-20",
+      },
+    },
+  },
+
+  BonusesResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      pagination: {
+        $ref: "#/components/schemas/PaginationInfo",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Bonus",
+        },
+      },
+    },
+  },
+
   CallData: {
     type: "object",
     properties: {

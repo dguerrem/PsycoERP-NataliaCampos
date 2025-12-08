@@ -21,6 +21,7 @@ const { authenticateToken } = require("./middlewares/auth");
 const authRoutes = require("./routes/auth/auth_routes");
 const sessionsRoutes = require("./routes/sessions/sessions_routes");
 const patientsRoutes = require("./routes/patients/patients_routes");
+const bonusesRoutes = require("./routes/bonuses/bonuses_routes");
 const callsRoutes = require("./routes/calls/calls_routes");
 const clinicsRoutes = require("./routes/clinics/clinics_routes");
 const clinicalNotesRoutes = require("./routes/clinical_notes/clinical_notes_routes");
@@ -106,6 +107,7 @@ app.get("/", (req, res) => {
       auth: "/api/auth",
       sessions: "/api/sessions",
       patients: "/api/patients",
+      bonuses: "/api/bonuses",
       calls: "/api/calls",
       clinics: "/api/clinics",
       clinical_notes: "/api/clinical-notes",
@@ -204,6 +206,7 @@ app.use(authenticateToken);
 // Rutas protegidas (requieren autenticación)
 app.use("/api/sessions", sessionsRoutes);
 app.use("/api/patients", patientsRoutes);
+app.use("/api/bonuses", bonusesRoutes);
 app.use("/api/calls", callsRoutes);
 app.use("/api/clinics", clinicsRoutes);
 app.use("/api/clinical-notes", clinicalNotesRoutes);

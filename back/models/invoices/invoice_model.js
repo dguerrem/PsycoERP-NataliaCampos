@@ -334,7 +334,8 @@ const getIssuedInvoices = async (db, filters = {}) => {
         `SELECT
            s.id as session_id,
            DATE_FORMAT(s.session_date, '%Y-%m-%d') as session_date,
-           s.price
+           s.price,
+           s.payment_method
          FROM invoice_sessions ist
          INNER JOIN sessions s ON ist.session_id = s.id AND s.is_active = true
          WHERE ist.invoice_id = ?
@@ -359,7 +360,8 @@ const getIssuedInvoices = async (db, filters = {}) => {
         sessions: sessionsDetails.map(session => ({
           session_id: parseInt(session.session_id),
           session_date: session.session_date,
-          price: parseFloat(session.price)
+          price: parseFloat(session.price),
+          payment_method: session.payment_method
         })),
         sessions_count: sessionsDetails.length,
         total: parseFloat(row.total) || 0,

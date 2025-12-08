@@ -183,6 +183,60 @@ const definitions = {
     },
   },
 
+  CreateBonusRequest: {
+    type: "object",
+    required: ["patient_id", "sessions_number", "price_per_session", "total_price"],
+    properties: {
+      patient_id: {
+        type: "integer",
+        format: "int64",
+        description: "ID del paciente (requerido)",
+        example: 5,
+      },
+      sessions_number: {
+        type: "integer",
+        description: "Número total de sesiones del bono (requerido, debe ser positivo)",
+        example: 10,
+      },
+      price_per_session: {
+        type: "number",
+        format: "decimal",
+        description: "Precio por sesión en euros (requerido, debe ser positivo)",
+        example: 50.00,
+      },
+      total_price: {
+        type: "number",
+        format: "decimal",
+        description: "Precio total del bono (requerido, debe coincidir con sessions_number * price_per_session)",
+        example: 500.00,
+      },
+      expiration_date: {
+        type: "string",
+        format: "date",
+        nullable: true,
+        description: "Fecha de expiración del bono en formato YYYY-MM-DD (opcional, debe ser fecha futura)",
+        example: "2025-12-31",
+      },
+    },
+  },
+
+  CreateBonusResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Bono creado exitosamente",
+      },
+      data: {
+        $ref: "#/components/schemas/Bonus",
+      },
+    },
+  },
+
   CallData: {
     type: "object",
     properties: {

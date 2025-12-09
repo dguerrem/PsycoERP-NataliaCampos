@@ -2,6 +2,8 @@ export type BonusStatus = 'active' | 'expired' | 'consumed';
 
 export interface Bonus {
   id: string;
+  patientId: number;
+  patientName: string;
   totalSessions: number;
   usedSessions: number;
   pricePerSession: number;
@@ -12,9 +14,11 @@ export interface Bonus {
 }
 
 export interface BonusFormData {
+  patientId: number;
   totalSessions: number;
   pricePerSession: number;
   totalPrice: number;
+  expiryDate: string; // ISO date string (YYYY-MM-DD)
 }
 
 export interface BonusHistorySession {

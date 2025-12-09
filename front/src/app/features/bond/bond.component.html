@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-xl font-semibold">Bonos del Paciente</h2>
+        <h2 class="text-xl font-semibold">Bonos</h2>
         <p class="text-sm text-muted-foreground">Gestión de bonos promocionales y paquetes de sesiones</p>
       </div>
       <button
@@ -71,9 +71,9 @@
               <div class="px-6">
                 <div class="flex items-start justify-between">
                   <div>
-                    <div class="font-semibold text-lg">Bono #{{ bonus.id }}</div>
+                    <div class="font-semibold text-lg">{{ bonus.patientName }}</div>
                     <p class="text-sm text-muted-foreground">
-                      {{ bonus.totalSessions }} sesiones • {{ bonus.pricePerSession }}€ por sesión
+                      Bono #{{ bonus.id }} • {{ bonus.totalSessions }} sesiones • {{ bonus.pricePerSession }}€ por sesión
                     </p>
                   </div>
                   <span
@@ -125,15 +125,14 @@
 
                   <!-- Actions -->
                   @if (bonus.status === 'active') {
-                    <div class="flex gap-2 pt-2">
+                    <div class="flex gap-2 pt-2 flex-wrap">
                       <button
-                        (click)="openUseSessionModal(bonus)"
+                        (click)="openEditModal(bonus)"
                         class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                          <polyline points="16 7 22 7 22 13"></polyline>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Usar Sesión
+                        Editar
                       </button>
                       <button
                         (click)="openHistoryModal(bonus)"
@@ -181,6 +180,17 @@
         <h3 class="text-lg font-semibold mb-4">Crear Nuevo Bono</h3>
 
         <form [formGroup]="bonusForm" class="space-y-4">
+          <!-- Patient Selector -->
+          <div>
+            <app-patient-selector
+              [control]="$any(bonusForm.get('patientId'))"
+              [patients]="patients()"
+              [label]="'Paciente'"
+              [placeholder]="'Seleccionar paciente...'"
+              [required]="true">
+            </app-patient-selector>
+          </div>
+
           <!-- Total Sessions -->
           <div>
             <label for="totalSessions" class="block text-sm font-medium text-gray-700 mb-1">
@@ -225,6 +235,19 @@
             />
           </div>
 
+          <!-- Expiry Date -->
+          <div>
+            <label for="expiryDate" class="block text-sm font-medium text-gray-700 mb-1">
+              Fecha de Expiración
+            </label>
+            <input
+              id="expiryDate"
+              type="date"
+              formControlName="expiryDate"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+
           <!-- Actions -->
           <div class="flex justify-end gap-2 pt-4">
             <button
@@ -243,55 +266,6 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Use Session Modal -->
-@if (selectedBonusUse()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">Usar Sesión del Bono #{{ selectedBonusUse()!.id }}</h3>
-
-        <div class="space-y-4">
-          <!-- Bonus Info -->
-          <div class="p-4 bg-muted rounded-lg">
-            <p class="text-sm text-muted-foreground mb-2">Información del Bono</p>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p class="font-medium">Sesiones Restantes</p>
-                <p>{{ getRemainingSession(selectedBonusUse()!) }}</p>
-              </div>
-              <div>
-                <p class="font-medium">Precio por Sesión</p>
-                <p>{{ selectedBonusUse()!.pricePerSession }}€</p>
-              </div>
-            </div>
-          </div>
-
-          <p class="text-sm text-muted-foreground">
-            ¿Confirmas que quieres usar una sesión de este bono? Esta acción no se puede deshacer.
-          </p>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-2">
-            <button
-              type="button"
-              (click)="closeUseSessionModal()"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Cancelar
-            </button>
-            <button
-              type="button"
-              (click)="handleUseSession()"
-              style="background-color: #d29f67"
-              class="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90">
-              Confirmar Uso
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -329,9 +303,8 @@
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y hora</th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sesión</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesional</th>
                       <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     </tr>
                   </thead>
@@ -340,7 +313,6 @@
                       <tr>
                         <td class="px-4 py-3 text-sm text-gray-900">{{ session.date }}</td>
                         <td class="px-4 py-3 text-sm text-gray-900">{{ session.session }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ session.professional }}</td>
                         <td class="px-4 py-3 text-sm">
                           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                             {{ session.status }}
@@ -371,6 +343,70 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Bonus Modal -->
+@if (editingBonus()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold mb-4">Editar Fecha de Expiración</h3>
+
+        <!-- Bonus Info (Read-only) -->
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Paciente:</span>
+            <span class="font-medium">{{ editingBonus()!.patientName }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Bono:</span>
+            <span class="font-medium">#{{ editingBonus()!.id }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Sesiones:</span>
+            <span class="font-medium">{{ editingBonus()!.totalSessions }} sesiones</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Precio total:</span>
+            <span class="font-medium">{{ editingBonus()!.totalPrice }}€</span>
+          </div>
+        </div>
+
+        <form [formGroup]="bonusForm" class="space-y-4">
+          <!-- Expiry Date -->
+          <div>
+            <label for="editExpiryDate" class="block text-sm font-medium text-gray-700 mb-1">
+              Fecha de Expiración
+            </label>
+            <input
+              id="editExpiryDate"
+              type="date"
+              formControlName="expiryDate"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              (click)="closeEditModal()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              (click)="handleEditBonus()"
+              [disabled]="!bonusForm.valid"
+              style="background-color: #d29f67"
+              class="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

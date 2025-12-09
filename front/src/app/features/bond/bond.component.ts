@@ -1,7 +1,11 @@
-import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Bonus, BonusFormData, BonusHistorySession, BonusSummary, BonusStatus } from './models/bond.model';
+import { PatientSelectorComponent } from '../../shared/components/patient-selector/patient-selector.component';
+import { PatientSelector } from '../../shared/models/patient.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-bond',
@@ -9,33 +13,63 @@ import { Bonus, BonusFormData, BonusHistorySession, BonusSummary, BonusStatus } 
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PatientSelectorComponent
   ],
   templateUrl: './bond.component.html',
   styleUrl: './bond.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BondComponent {
+export class BondComponent implements OnInit {
   private fb = new FormBuilder();
+  private http = inject(HttpClient);
 
   // State signals
   bonuses = signal<Bonus[]>(this.getMockBonuses());
   isCreatingBonus = signal(false);
+  editingBonus = signal<Bonus | null>(null);
   selectedBonusHistory = signal<Bonus | null>(null);
-  selectedBonusUse = signal<Bonus | null>(null);
+  patients = signal<PatientSelector[]>([]);
 
   // Form
   bonusForm: FormGroup;
 
   constructor() {
+    // Calculate default expiry date (1 year from now)
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 1);
+    const defaultExpiryString = defaultExpiryDate.toISOString().split('T')[0];
+
     this.bonusForm = this.fb.group({
+      patientId: [null, [Validators.required]],
       totalSessions: [10, [Validators.required, Validators.min(1)]],
       pricePerSession: [50, [Validators.required, Validators.min(0)]],
-      totalPrice: [500, [Validators.required, Validators.min(0)]]
+      totalPrice: [500, [Validators.required, Validators.min(0)]],
+      expiryDate: [defaultExpiryString, [Validators.required]]
     });
 
     // Listen to changes in form fields to update calculations
     this.setupFormCalculations();
+  }
+
+  ngOnInit(): void {
+    this.loadPatients();
+  }
+
+  // Load patients
+  private loadPatients(): void {
+    this.http
+      .get<{ data: PatientSelector[] }>(
+        `${environment.api.baseUrl}/patients/active-with-clinic`
+      )
+      .subscribe({
+        next: (response) => {
+          this.patients.set(response.data);
+        },
+        error: (error) => {
+          console.error('Error loading patients:', error);
+        }
+      });
   }
 
   // Computed signals
@@ -114,10 +148,18 @@ export class BondComponent {
   // Actions
   openCreateModal(): void {
     this.isCreatingBonus.set(true);
+
+    // Calculate default expiry date (1 year from now)
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 1);
+    const defaultExpiryString = defaultExpiryDate.toISOString().split('T')[0];
+
     this.bonusForm.reset({
+      patientId: null,
       totalSessions: 10,
       pricePerSession: 50,
-      totalPrice: 500
+      totalPrice: 500,
+      expiryDate: defaultExpiryString
     });
   }
 
@@ -131,15 +173,21 @@ export class BondComponent {
       const formData = this.bonusForm.value as BonusFormData;
       console.log('Creating bonus:', formData);
 
+      // Get patient name
+      const patient = this.patients().find(p => p.idPaciente === formData.patientId);
+      const patientName = patient?.nombreCompleto || 'Unknown';
+
       // Mock: Add new bonus to the list
       const newBonus: Bonus = {
         id: `bonus-${Date.now()}`,
+        patientId: formData.patientId,
+        patientName: patientName,
         totalSessions: formData.totalSessions,
         usedSessions: 0,
         pricePerSession: formData.pricePerSession,
         totalPrice: formData.totalPrice,
         purchaseDate: new Date(),
-        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // +1 year
+        expiryDate: new Date(formData.expiryDate),
         status: 'active'
       };
 
@@ -148,33 +196,44 @@ export class BondComponent {
     }
   }
 
-  openUseSessionModal(bonus: Bonus): void {
-    this.selectedBonusUse.set(bonus);
+  openEditModal(bonus: Bonus): void {
+    this.editingBonus.set(bonus);
+
+    // Format date to YYYY-MM-DD for input[type="date"]
+    const expiryDateString = bonus.expiryDate instanceof Date
+      ? bonus.expiryDate.toISOString().split('T')[0]
+      : new Date(bonus.expiryDate).toISOString().split('T')[0];
+
+    // Only set the expiry date field, keep other fields with their original values
+    this.bonusForm.patchValue({
+      expiryDate: expiryDateString
+    });
   }
 
-  closeUseSessionModal(): void {
-    this.selectedBonusUse.set(null);
+  closeEditModal(): void {
+    this.editingBonus.set(null);
+    this.bonusForm.reset();
   }
 
-  handleUseSession(): void {
-    const bonus = this.selectedBonusUse();
-    if (bonus) {
-      console.log('Using session from bonus:', bonus.id);
+  handleEditBonus(): void {
+    const bonus = this.editingBonus();
+    if (this.bonusForm.valid && bonus) {
+      const expiryDate = this.bonusForm.get('expiryDate')?.value;
+      console.log('Editing bonus expiry date:', expiryDate);
 
-      // Mock: Update bonus used sessions
+      // Mock: Update only expiry date in the bonus
       this.bonuses.update(bonuses =>
         bonuses.map(b =>
           b.id === bonus.id
             ? {
                 ...b,
-                usedSessions: b.usedSessions + 1,
-                status: (b.usedSessions + 1 >= b.totalSessions) ? 'consumed' : b.status
+                expiryDate: new Date(expiryDate)
               }
             : b
         )
       );
 
-      this.closeUseSessionModal();
+      this.closeEditModal();
     }
   }
 
@@ -211,6 +270,8 @@ export class BondComponent {
     return [
       {
         id: 'bonus-1',
+        patientId: 1,
+        patientName: 'Juan Pérez',
         totalSessions: 10,
         usedSessions: 6,
         pricePerSession: 50,
@@ -221,6 +282,8 @@ export class BondComponent {
       },
       {
         id: 'bonus-2',
+        patientId: 2,
+        patientName: 'María García',
         totalSessions: 10,
         usedSessions: 2,
         pricePerSession: 50,

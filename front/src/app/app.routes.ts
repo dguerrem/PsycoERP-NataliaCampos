@@ -114,11 +114,11 @@ export const routes: Routes = [
         },
       },
       {
-        path: 'bond',
+        path: 'bonuses',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/bond/bond.component').then(
-            (m) => m.BondComponent
+          import('./features/bonuses/bonuses.component').then(
+            (m) => m.BonusesComponent
           ),
         data: {
           menu: {

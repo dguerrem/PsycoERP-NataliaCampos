@@ -19,7 +19,7 @@ src/
 │  │   ├─ pacientes/
 │  │   ├─ sesiones/
 │  │   ├─ facturacion/
-│  │   ├─ bonos/              # Generación de bonos
+│  │   ├─ bonuses/            # Gestión de bonos
 │  │   └─ configuration/
 │  ├─ app-routing.ts
 │  └─ app.component.ts

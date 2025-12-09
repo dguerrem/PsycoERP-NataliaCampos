@@ -1,208 +1,288 @@
-const { getBonuses, getBonusesByPatientId, getBonusHistoryById, useBonusSession, createBonus } = require("../../models/bonuses/bonuses_model");
+const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage } = require("../../models/bonuses/bonuses_model");
 const logger = require("../../utils/logger");
 
 const obtenerBonuses = async (req, res) => {
-  try {
-    const { patient_id, status, fecha_desde, fecha_hasta, page, limit } = req.query;
+    try {
+        const {
+            patient_id,
+            status,
+            expiration_date,
+            page,
+            limit,
+        } = req.query;
 
-    // Construir filtros incluyendo paginación
-    const filters = {};
-    if (patient_id) filters.patient_id = patient_id;
-    if (status) filters.status = status;
-    if (fecha_desde) filters.fecha_desde = fecha_desde;
-    if (fecha_hasta) filters.fecha_hasta = fecha_hasta;
-    if (page) filters.page = page;
-    if (limit) filters.limit = limit;
+        // Validar parámetros de paginación
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
 
-    const result = await getBonuses(req.db, filters);
+        // Validaciones de límites
+        if (pageNum < 1) {
+            return res.status(400).json({
+                success: false,
+                error: "El número de página debe ser mayor a 0",
+            });
+        }
 
-    res.json({
-      success: true,
-      pagination: result.pagination,
-      data: result.data,
-    });
-  } catch (err) {
-    logger.error("Error al obtener bonuses:", err.message);
-    res.status(500).json({
-      success: false,
-      error: "Error al obtener los bonuses",
-    });
-  }
-};
+        if (limitNum < 1) {
+            return res.status(400).json({
+                success: false,
+                error: "El límite debe ser mayor a 0",
+            });
+        }
 
-const obtenerBonusesPorPaciente = async (req, res) => {
-  try {
-    const { patient_id } = req.params;
+        // Validar patient_id si se proporciona
+        if (patient_id && isNaN(patient_id)) {
+            return res.status(400).json({
+                success: false,
+                error: "El patient_id debe ser un número válido",
+            });
+        }
 
-    if (!patient_id) {
-      return res.status(400).json({
-        success: false,
-        error: "ID del paciente es requerido",
-      });
+        // Validar status si se proporciona
+        if (status && !['active', 'consumed', 'expired'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                error: "El status debe ser: active, consumed o expired",
+            });
+        }
+
+        // Construir filtros incluyendo paginación
+        const filters = {};
+        if (patient_id) filters.patient_id = patient_id;
+        if (status) filters.status = status;
+        if (expiration_date) filters.expiration_date = expiration_date;
+
+        // Parámetros de paginación
+        filters.page = pageNum;
+        filters.limit = limitNum;
+
+        const result = await getBonuses(req.db, filters);
+
+        res.json({
+            success: true,
+            pagination: result.pagination,
+            data: result.data,
+        });
+    } catch (err) {
+        logger.error("Error al obtener bonuses:", err.message);
+        res.status(500).json({
+            success: false,
+            error: "Error al obtener los bonuses",
+        });
     }
-
-    const bonusesData = await getBonusesByPatientId(req.db, patient_id);
-
-    res.json({
-      success: true,
-      data: {
-        kpis: bonusesData.kpis,
-        bonuses: bonusesData.bonuses,
-      },
-    });
-  } catch (err) {
-    logger.error("Error al obtener bonuses por paciente:", err.message);
-    res.status(500).json({
-      success: false,
-      error: "Error al obtener los bonuses del paciente",
-    });
-  }
-};
-
-const obtenerHistorialBonus = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: "ID del bonus es requerido",
-      });
-    }
-
-    const bonusHistory = await getBonusHistoryById(req.db, id);
-
-    if (!bonusHistory) {
-      return res.status(404).json({
-        success: false,
-        error: "Bonus no encontrado",
-      });
-    }
-
-    res.json({
-      success: true,
-      data: bonusHistory,
-    });
-  } catch (err) {
-    logger.error("Error al obtener historial del bonus:", err.message);
-    res.status(500).json({
-      success: false,
-      error: "Error al obtener el historial del bonus",
-    });
-  }
-};
-
-const registrarSesionBonus = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: "ID del bonus es requerido",
-      });
-    }
-
-    const result = await useBonusSession(req.db, id);
-
-    res.status(201).json({
-      success: true,
-      message: "Sesión registrada exitosamente",
-      data: {
-        history_id: result.id,
-        bonus_id: result.bonus_id,
-        new_used_sessions: result.new_used_sessions,
-        remaining_sessions: result.remaining_sessions,
-        new_status: result.new_status
-      },
-    });
-  } catch (err) {
-    logger.error("Error al registrar sesión del bonus:", err.message);
-    
-    if (err.message === 'Bonus no encontrado') {
-      return res.status(404).json({
-        success: false,
-        error: "Bonus no encontrado",
-      });
-    }
-    
-    if (err.message === 'El bonus no está activo' || err.message === 'El bonus ya ha consumido todas las sesiones') {
-      return res.status(400).json({
-        success: false,
-        error: err.message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: "Error al registrar la sesión del bonus",
-    });
-  }
 };
 
 const crearBonus = async (req, res) => {
-  try {
-    const {
-      patient_id,
-      total_sessions,
-      price_per_session,
-      total_price
-    } = req.body;
+    try {
+        const {
+            patient_id,
+            sessions_number,
+            price_per_session,
+            total_price,
+            expiration_date,
+        } = req.body;
 
-    // Validaciones básicas
-    if (!patient_id || !total_sessions || !price_per_session || !total_price) {
-      return res.status(400).json({
-        success: false,
-        error: "Los campos patient_id, total_sessions, price_per_session y total_price son requeridos",
-      });
+        // Validar campos obligatorios
+        if (
+            !patient_id ||
+            !sessions_number ||
+            !price_per_session ||
+            !total_price
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Faltan campos obligatorios",
+                required_fields: [
+                    "patient_id",
+                    "sessions_number",
+                    "price_per_session",
+                    "total_price",
+                ],
+            });
+        }
+
+        // Validar que patient_id sea un número válido
+        if (isNaN(patient_id)) {
+            return res.status(400).json({
+                success: false,
+                error: "El patient_id debe ser un número válido",
+            });
+        }
+
+        // Validar que sessions_number sea un número positivo
+        if (isNaN(sessions_number) || sessions_number <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El número de sesiones debe ser un número positivo",
+            });
+        }
+
+        // Validar que price_per_session sea un número positivo
+        if (isNaN(price_per_session) || price_per_session <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El precio por sesión debe ser un número positivo",
+            });
+        }
+
+        // Validar que total_price sea un número positivo
+        if (isNaN(total_price) || total_price <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El precio total debe ser un número positivo",
+            });
+        }
+
+        // Validar que el total_price sea coherente con sessions_number * price_per_session
+        const expectedTotal = sessions_number * price_per_session;
+        const difference = Math.abs(expectedTotal - total_price);
+        if (difference > 0.01) {
+            return res.status(400).json({
+                success: false,
+                error: `El precio total (${total_price}) no coincide con sessions_number * price_per_session (${expectedTotal})`,
+            });
+        }
+
+        // Validar formato de fecha de expiración si se proporciona
+        if (expiration_date) {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(expiration_date)) {
+                return res.status(400).json({
+                    success: false,
+                    error: "El formato de expiration_date debe ser YYYY-MM-DD",
+                });
+            }
+
+            // Validar que la fecha de expiración sea futura
+            const expirationDateObj = new Date(expiration_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (expirationDateObj < today) {
+                return res.status(400).json({
+                    success: false,
+                    error: "La fecha de expiración debe ser una fecha futura",
+                });
+            }
+        }
+
+        // Verificar que el paciente no tenga ya un bono activo
+        const tieneBonoActivo = await hasActiveBonus(req.db, patient_id);
+        if (tieneBonoActivo) {
+            return res.status(409).json({
+                success: false,
+                error: "El paciente ya tiene un bono activo. No se pueden crear múltiples bonos activos para el mismo paciente.",
+            });
+        }
+
+        const bonusData = {
+            patient_id,
+            sessions_number,
+            price_per_session,
+            total_price,
+            remaining_sessions: sessions_number, // Al crear, remaining = total
+            expiration_date: expiration_date || null,
+        };
+
+        const nuevoBonus = await createBonus(req.db, bonusData);
+
+        res.status(201).json({
+            success: true,
+            message: "Bono creado exitosamente",
+            data: nuevoBonus,
+        });
+    } catch (err) {
+        logger.error("Error al crear bonus:", err.message);
+
+        // Manejo de errores específicos de base de datos
+        if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+            return res.status(404).json({
+                success: false,
+                error: "El paciente especificado no existe",
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: "Error al crear el bono",
+        });
     }
+};
 
-    // Validaciones de tipo y rango
-    if (total_sessions <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "El número de sesiones debe ser mayor a 0",
-      });
+const redimirBono = async (req, res) => {
+    try {
+        const { patient_id, session_id } = req.body;
+
+        // Validar campos obligatorios
+        if (!patient_id || !session_id) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id son obligatorios",
+            });
+        }
+
+        // Validar que sean números
+        if (isNaN(patient_id) || isNaN(session_id)) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id deben ser números válidos",
+            });
+        }
+
+        // Validar que sean números positivos
+        if (patient_id <= 0 || session_id <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "Los campos patient_id y session_id deben ser números positivos",
+            });
+        }
+
+        // Obtener el bono activo del paciente
+        const activeBonus = await getActiveBonus(req.db, patient_id);
+
+        if (!activeBonus) {
+            return res.status(404).json({
+                success: false,
+                error: "El paciente no tiene un bono activo disponible",
+            });
+        }
+
+        // Redimir el uso del bono
+        const bonusActualizado = await redeemBonusUsage(req.db, session_id, activeBonus.id);
+
+        res.status(200).json({
+            success: true,
+            message: "Uso del bono redimido exitosamente",
+            data: bonusActualizado,
+        });
+
+    } catch (err) {
+        logger.error("Error al redimir uso del bono:", err.message);
+
+        // Manejo de errores específicos
+        if (err.message === 'SESSION_NOT_FOUND') {
+            return res.status(404).json({
+                success: false,
+                error: "La sesión especificada no existe o no está activa",
+            });
+        }
+
+        if (err.message === 'BONUS_UPDATE_FAILED') {
+            return res.status(409).json({
+                success: false,
+                error: "No se pudo redimir el uso del bono. Es posible que ya no tenga sesiones disponibles",
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: "Error al redimir el uso del bono",
+        });
     }
-
-    if (price_per_session <= 0 || total_price <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Los precios deben ser mayores a 0",
-      });
-    }
-
-    const bonusData = {
-      patient_id,
-      total_sessions,
-      price_per_session,
-      total_price
-    };
-
-    const bonusId = await createBonus(req.db, bonusData);
-
-    // Obtener el bonus recién creado para devolverlo
-    const nuevoBonus = await getBonusesByPatientId(req.db, patient_id);
-    const bonusCreado = nuevoBonus.bonuses.find(bonus => bonus.idBono === bonusId);
-
-    res.status(201).json({
-      success: true,
-      message: "Bonus creado exitosamente",
-      data: bonusCreado,
-    });
-  } catch (err) {
-    logger.error("Error al crear bonus:", err.message);
-    res.status(500).json({
-      success: false,
-      error: "Error al crear el bonus",
-    });
-  }
 };
 
 module.exports = {
-  obtenerBonuses,
-  obtenerBonusesPorPaciente,
-  obtenerHistorialBonus,
-  registrarSesionBonus,
-  crearBonus,
+    obtenerBonuses,
+    crearBonus,
+    redimirBono,
 };

@@ -81,7 +81,7 @@ const swaggerDefinition = {
     },
     {
       name: "Bonuses",
-      description: "Gestión de bonuses de pacientes",
+      description: "Gestión de bonos de sesiones",
     },
     {
       name: "Calls",

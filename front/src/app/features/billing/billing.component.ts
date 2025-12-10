@@ -137,9 +137,11 @@ export class BillingComponent implements OnInit {
   // Preview modal state
   isPreviewModalOpen = signal(false);
   previewInvoiceData = signal<InvoiceToGenerate | null>(null);
+  allowPreviewDownload = signal(false); // Solo true cuando se previsualiza desde existing-invoices
 
   // Preview modal state for clinic invoices
   isClinicPreviewModalOpen = signal(false);
+  allowClinicPreviewDownload = signal(false); // Solo true cuando se previsualiza desde existing-clinic-invoices
 
   // User data for invoice
   userData = signal<User | null>(null);
@@ -721,18 +723,19 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Vista previa de la factura
+   * Vista previa de la factura (desde modal de generación - NO permitir descarga)
    */
   previewInvoice(dni: string) {
     const invoice = this.invoicesToGenerate().find((inv) => inv.dni === dni);
     if (invoice) {
       this.previewInvoiceData.set(invoice);
+      this.allowPreviewDownload.set(false); // No permitir descarga desde modal de generación
       this.isPreviewModalOpen.set(true);
     }
   }
 
   /**
-   * Vista previa de una factura pendiente
+   * Vista previa de una factura pendiente (NO permitir descarga)
    */
   previewPendingInvoice(invoice: PendingInvoice) {
     // Convertir PendingInvoice a InvoicePreviewData
@@ -750,11 +753,12 @@ export class BillingComponent implements OnInit {
     };
 
     this.previewInvoiceData.set(previewData);
+    this.allowPreviewDownload.set(false); // No permitir descarga desde facturas pendientes
     this.isPreviewModalOpen.set(true);
   }
 
   /**
-   * Vista previa de una factura existente
+   * Vista previa de una factura existente (SÍ permitir descarga)
    */
   previewExistingInvoice(invoice: ExistingInvoice) {
     // Convertir ExistingInvoice a InvoicePreviewData
@@ -770,6 +774,7 @@ export class BillingComponent implements OnInit {
     };
 
     this.previewInvoiceData.set(previewData);
+    this.allowPreviewDownload.set(true); // SÍ permitir descarga desde facturas existentes
     this.isPreviewModalOpen.set(true);
   }
 
@@ -827,7 +832,7 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Vista previa de una factura existente de clínica
+   * Vista previa de una factura existente de clínica (SÍ permitir descarga)
    */
   previewExistingClinicInvoice(clinicData: ExistingClinicInvoice) {
     // Los datos ya vienen con el desglose sessions_data desde el backend
@@ -848,11 +853,12 @@ export class BillingComponent implements OnInit {
     };
 
     this.clinicInvoiceToGenerate.set(clinicInvoiceData);
+    this.allowClinicPreviewDownload.set(true); // SÍ permitir descarga desde facturas existentes de clínicas
     this.isClinicPreviewModalOpen.set(true);
   }
 
   /**
-   * Vista previa de una factura pendiente de clínica
+   * Vista previa de una factura pendiente de clínica (NO permitir descarga)
    */
   previewPendingClinicInvoice(clinicId: number) {
     const clinicInvoice = this.prepareClinicInvoiceData(clinicId);
@@ -861,6 +867,7 @@ export class BillingComponent implements OnInit {
     }
 
     this.clinicInvoiceToGenerate.set(clinicInvoice);
+    this.allowClinicPreviewDownload.set(false); // No permitir descarga desde facturas pendientes
     this.isClinicPreviewModalOpen.set(true);
   }
 
@@ -1045,11 +1052,12 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Vista previa de la factura de clínica
+   * Vista previa de la factura de clínica (desde modal de generación - NO permitir descarga)
    */
   previewClinicInvoice() {
     const invoice = this.clinicInvoiceToGenerate();
     if (invoice) {
+      this.allowClinicPreviewDownload.set(false); // No permitir descarga desde modal de generación
       this.isClinicPreviewModalOpen.set(true);
     }
   }
@@ -1195,6 +1203,81 @@ export class BillingComponent implements OnInit {
   }
 
   /**
+   * Genera las filas HTML de las sesiones para la tabla de la factura
+   */
+  private generateSessionRowsHTML(sessions: any[], userName: string): string {
+    if (!sessions || sessions.length === 0) {
+      return `<tr style="background-color: white;">
+        <td colspan="6" style="padding: 12px 16px; text-align: center; color: #6b7280;">Sin sesiones</td>
+      </tr>`;
+    }
+
+    return sessions.map((session, index) => {
+      const bgColor = index % 2 === 0 ? 'white' : '#f9fafb';
+      const sessionDate = this.formatDateForHTML(session.session_date);
+
+      return `<tr style="background-color: ${bgColor};">
+        <td style="padding: 12px 16px; font-weight: 500; color: #111827;">Sesión ${userName}</td>
+        <td style="padding: 12px 16px; color: #374151;">${sessionDate}</td>
+        <td style="padding: 12px 16px; text-align: right; color: #374151;">${this.formatCurrency(session.price)}</td>
+        <td style="padding: 12px 16px; text-align: center; color: #374151;">1</td>
+        <td style="padding: 12px 16px; text-align: right; color: #374151;">0%</td>
+        <td style="padding: 12px 16px; text-align: right; font-weight: 500; color: #111827;">${this.formatCurrency(session.price)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /**
+   * Formatea el método de pago para el HTML de descarga
+   */
+  private formatPaymentMethodForHTML(method: string | undefined): string {
+    if (!method) return '-';
+    const methods: { [key: string]: string } = {
+      'efectivo': 'Efectivo',
+      'tarjeta': 'Tarjeta',
+      'transferencia': 'Transferencia',
+      'bizum': 'Bizum'
+    };
+    return methods[method.toLowerCase()] || method;
+  }
+
+  /**
+   * Obtiene los métodos de pago únicos de las sesiones para el HTML
+   */
+  private getPaymentMethodsForHTML(sessions: any[]): string {
+    if (!sessions || sessions.length === 0) return '';
+
+    const methods: { [key: string]: string } = {
+      'efectivo': 'Efectivo',
+      'tarjeta': 'Tarjeta',
+      'transferencia': 'Transferencia',
+      'bizum': 'Bizum'
+    };
+
+    const uniqueMethods = [...new Set(
+      sessions
+        .map(s => s.payment_method)
+        .filter((m): m is string => !!m)
+    )];
+
+    if (uniqueMethods.length === 0) return '';
+
+    return uniqueMethods
+      .map(m => methods[m.toLowerCase()] || m)
+      .join(', ');
+  }
+
+  /**
+   * Formatea una fecha para el HTML de descarga
+   */
+  private formatDateForHTML(dateStr: string): string {
+    if (!dateStr) return '-';
+    if (dateStr.includes('/')) return dateStr;
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  /**
    * Genera el HTML de una factura para renderizar temporalmente
    */
   private generateInvoiceHTML(invoice: ExistingInvoice): string {
@@ -1202,6 +1285,7 @@ export class BillingComponent implements OnInit {
     const irpf = Number(user?.irpf || 0);
     const retentionAmount = invoice.total * (irpf / 100);
     const totalWithIrpf = invoice.total - retentionAmount;
+    const paymentMethods = this.getPaymentMethodsForHTML(invoice.sessions);
 
     return `
       <div style="max-width: 800px; margin: 0 auto; background: white; padding: 32px; font-family: system-ui, -apple-system, sans-serif;">
@@ -1253,27 +1337,16 @@ export class BillingComponent implements OnInit {
           <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 8px;">
             <thead style="background-color: #f9fafb;">
               <tr>
+                <th style="padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Concepto</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Fecha</th>
+                <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Precio</th>
                 <th style="padding: 12px 16px; text-align: center; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Cantidad</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Descripción</th>
-                <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Precio Unitario</th>
+                <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">IVA</th>
                 <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Total</th>
               </tr>
             </thead>
             <tbody>
-              <tr style="background-color: white;">
-                <td style="padding: 12px 16px; text-align: center; font-weight: 500; color: #111827;">${
-                  invoice.sessions_count
-                }</td>
-                <td style="padding: 12px 16px; color: #374151;">${
-                  invoice.concept
-                }</td>
-                <td style="padding: 12px 16px; text-align: right; color: #374151;">${this.formatCurrency(
-                  invoice.total / invoice.sessions_count
-                )}</td>
-                <td style="padding: 12px 16px; text-align: right; font-weight: 500; color: #111827;">${this.formatCurrency(
-                  invoice.total
-                )}</td>
-              </tr>
+              ${this.generateSessionRowsHTML(invoice.sessions, user?.name || '')}
             </tbody>
           </table>
         </div>
@@ -1306,6 +1379,14 @@ export class BillingComponent implements OnInit {
                   )}</span>
                 </div>
               </div>
+              ${paymentMethods ? `
+              <div style="border-top: 1px solid #d1d5db; padding-top: 12px; margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; color: #374151;">
+                  <span>Método de pago:</span>
+                  <span style="font-weight: 500;">${paymentMethods}</span>
+                </div>
+              </div>
+              ` : ''}
             </div>
           </div>
         </div>

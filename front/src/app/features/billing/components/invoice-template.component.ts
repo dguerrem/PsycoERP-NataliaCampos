@@ -81,7 +81,7 @@ import { InvoicePreviewData } from './invoice-preview.component';
                 @for (session of invoiceData.sessions || []; track session.session_id; let isOdd = $odd) {
                   <tr [class.bg-gray-50]="isOdd" [class.bg-white]="!isOdd">
                     <td class="px-4 py-3 font-medium text-gray-900">Sesión @if (userData) {{{ userData.name }}}</td>
-                    <td class="px-4 py-3 text-gray-700">{{ session.session_date }}</td>
+                    <td class="px-4 py-3 text-gray-700">{{ formatDate(session.session_date) }}</td>
                     <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(session.price) }}</td>
                     <td class="px-4 py-3 text-center text-gray-700">1</td>
                     <td class="px-4 py-3 text-right text-gray-700">0%</td>
@@ -112,6 +112,14 @@ import { InvoicePreviewData } from './invoice-preview.component';
                     <span>{{ formatCurrency(invoiceData.total_gross) }}</span>
                   </div>
                 </div>
+                @if (getPaymentMethods()) {
+                  <div class="border-t border-gray-300 pt-3 mt-3">
+                    <div class="flex justify-between text-gray-700">
+                      <span>Método de pago:</span>
+                      <span class="font-medium">{{ getPaymentMethods() }}</span>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -160,5 +168,45 @@ export class InvoiceTemplateComponent {
     // Si está en formato ISO (YYYY-MM-DD), convertirla a DD/MM/YYYY
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Formatea el método de pago para mostrar en español
+   */
+  formatPaymentMethod(method: string | undefined): string {
+    if (!method) return '-';
+    const methods: { [key: string]: string } = {
+      'efectivo': 'Efectivo',
+      'tarjeta': 'Tarjeta',
+      'transferencia': 'Transferencia',
+      'bizum': 'Bizum'
+    };
+    return methods[method.toLowerCase()] || method;
+  }
+
+  /**
+   * Obtiene los métodos de pago únicos de todas las sesiones
+   */
+  getPaymentMethods(): string {
+    if (!this.invoiceData?.sessions?.length) return '';
+
+    const methods: { [key: string]: string } = {
+      'efectivo': 'Efectivo',
+      'tarjeta': 'Tarjeta',
+      'transferencia': 'Transferencia',
+      'bizum': 'Bizum'
+    };
+
+    const uniqueMethods = [...new Set(
+      this.invoiceData.sessions
+        .map(s => s.payment_method)
+        .filter((m): m is string => !!m)
+    )];
+
+    if (uniqueMethods.length === 0) return '';
+
+    return uniqueMethods
+      .map(m => methods[m.toLowerCase()] || m)
+      .join(', ');
   }
 }

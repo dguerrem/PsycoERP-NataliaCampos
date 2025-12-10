@@ -46,6 +46,7 @@ export class ClinicInvoicePreviewComponent {
   @Input({ required: true })
   clinicInvoiceData!: ClinicInvoicePreviewData | null;
   @Input({ required: true }) userData!: User | null;
+  @Input() allowDownload: boolean = false; // Solo permitir descarga desde existing-clinic-invoices
 
   @Output() close = new EventEmitter<void>();
   @Output() download = new EventEmitter<void>();

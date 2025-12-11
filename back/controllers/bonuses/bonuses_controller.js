@@ -1,4 +1,4 @@
-const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage, updateBonusExpirationDate } = require("../../models/bonuses/bonuses_model");
+const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage, updateBonusExpirationDate, deleteBonus } = require("../../models/bonuses/bonuses_model");
 const logger = require("../../utils/logger");
 
 const obtenerBonuses = async (req, res) => {
@@ -345,9 +345,69 @@ const actualizarBonus = async (req, res) => {
     }
 };
 
+const eliminarBonus = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Validar que el ID sea un número válido
+        if (isNaN(id) || parseInt(id) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El ID del bono debe ser un número válido",
+            });
+        }
+
+        // Intentar eliminar el bono
+        const resultado = await deleteBonus(req.db, parseInt(id));
+
+        if (!resultado.success) {
+            // Manejar diferentes tipos de errores
+            if (resultado.error === 'BONUS_NOT_FOUND') {
+                return res.status(404).json({
+                    success: false,
+                    error: "Bono no encontrado o ya eliminado",
+                });
+            }
+
+            if (resultado.error === 'BONUS_ALREADY_USED') {
+                return res.status(409).json({
+                    success: false,
+                    error: "No se puede eliminar el bono porque ya se ha redimido al menos un uso",
+                });
+            }
+
+            if (resultado.error === 'BONUS_EXPIRED') {
+                return res.status(409).json({
+                    success: false,
+                    error: "No se puede eliminar el bono porque ya está expirado",
+                });
+            }
+
+            // Error genérico
+            return res.status(500).json({
+                success: false,
+                error: "Error al eliminar el bono",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Bono eliminado exitosamente",
+        });
+
+    } catch (err) {
+        logger.error("Error al eliminar bono:", err.message);
+        res.status(500).json({
+            success: false,
+            error: "Error al eliminar el bono",
+        });
+    }
+};
+
 module.exports = {
     obtenerBonuses,
     crearBonus,
     redimirBono,
     actualizarBonus,
+    eliminarBonus,
 };

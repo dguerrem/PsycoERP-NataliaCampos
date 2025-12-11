@@ -479,6 +479,104 @@ const bonusesPaths = {
                 },
             },
         },
+        delete: {
+            tags: ["Bonuses"],
+            summary: "Eliminar un bono (soft delete)",
+            description: "Elimina un bono solo si no se ha usado (remaining_sessions = sessions_number) y la fecha de expiración es mayor a hoy. Realiza un soft delete (is_active = false)",
+            parameters: [
+                {
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    description: "ID del bono a eliminar",
+                    schema: {
+                        type: "integer",
+                        format: "int64",
+                        example: 1,
+                    },
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Bono eliminado exitosamente",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/DeleteBonusResponse",
+                            },
+                            example: {
+                                success: true,
+                                message: "Bono eliminado exitosamente"
+                            }
+                        },
+                    },
+                },
+                400: {
+                    description: "ID inválido",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "El ID del bono debe ser un número válido"
+                            }
+                        },
+                    },
+                },
+                404: {
+                    description: "Bono no encontrado",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Bono no encontrado o ya eliminado"
+                            }
+                        },
+                    },
+                },
+                409: {
+                    description: "Bono no se puede eliminar",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            examples: {
+                                alreadyUsed: {
+                                    summary: "Bono ya usado",
+                                    value: {
+                                        success: false,
+                                        error: "No se puede eliminar el bono porque ya se ha redimido al menos un uso"
+                                    }
+                                },
+                                expired: {
+                                    summary: "Bono expirado",
+                                    value: {
+                                        success: false,
+                                        error: "No se puede eliminar el bono porque ya está expirado"
+                                    }
+                                }
+                            }
+                        },
+                    },
+                },
+                500: {
+                    description: "Error del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                        },
+                    },
+                },
+            },
+        },
     },
 };
 

@@ -1045,6 +1045,20 @@ const definitions = {
     },
   },
 
+  DeleteBonusResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Bono eliminado exitosamente",
+      },
+    },
+  },
+
   CreateClinicRequest: {
     type: "object",
     required: ["name", "clinic_color"],

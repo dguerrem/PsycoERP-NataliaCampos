@@ -429,6 +429,61 @@ const updateBonusExpirationDate = async (db, bonus_id, expiration_date) => {
     };
 };
 
+// Eliminar bono (soft delete) solo si no se ha usado y no está expirado
+const deleteBonus = async (db, bonus_id) => {
+    // Primero verificar si el bono existe y cumple las condiciones para ser eliminado
+    const checkQuery = `
+        SELECT 
+            id,
+            sessions_number,
+            remaining_sessions,
+            expiration_date
+        FROM bonuses
+        WHERE id = ?
+          AND is_active = true
+    `;
+
+    const [bonusRows] = await db.execute(checkQuery, [bonus_id]);
+
+    if (bonusRows.length === 0) {
+        return { success: false, error: 'BONUS_NOT_FOUND' };
+    }
+
+    const bonus = bonusRows[0];
+
+    // Verificar que no se haya redimido ningún uso
+    if (bonus.remaining_sessions < bonus.sessions_number) {
+        return { success: false, error: 'BONUS_ALREADY_USED' };
+    }
+
+    // Verificar que no esté expirado (fecha de expiración sea mayor a hoy)
+    if (bonus.expiration_date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expirationDate = new Date(bonus.expiration_date);
+        expirationDate.setHours(0, 0, 0, 0);
+
+        if (expirationDate <= today) {
+            return { success: false, error: 'BONUS_EXPIRED' };
+        }
+    }
+
+    // Realizar el soft delete
+    const deleteQuery = `
+        UPDATE bonuses
+        SET is_active = false
+        WHERE id = ?
+    `;
+
+    const [result] = await db.execute(deleteQuery, [bonus_id]);
+
+    if (result.affectedRows === 0) {
+        return { success: false, error: 'DELETE_FAILED' };
+    }
+
+    return { success: true };
+};
+
 module.exports = {
     getBonuses,
     createBonus,
@@ -436,4 +491,5 @@ module.exports = {
     getActiveBonus,
     redeemBonusUsage,
     updateBonusExpirationDate,
+    deleteBonus,
 };

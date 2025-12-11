@@ -1909,6 +1909,88 @@ const definitions = {
               },
             },
           },
+          pending_calls: {
+            type: "array",
+            description: "Llamadas facturables pendientes de facturar (misma estructura que pending_invoices pero sin progenitors_data)",
+            items: {
+              type: "object",
+              properties: {
+                patient_id: {
+                  type: "null",
+                  description: "ID del paciente (null para llamadas)",
+                  example: null,
+                },
+                patient_full_name: {
+                  type: "string",
+                  description: "Nombre completo de la persona que llama",
+                  example: "María López Fernández",
+                },
+                dni: {
+                  type: "string",
+                  description: "DNI de la persona que llama",
+                  example: "98765432X",
+                },
+                email: {
+                  type: "null",
+                  description: "Email (null para llamadas)",
+                  example: null,
+                },
+                patient_address_line1: {
+                  type: "string",
+                  description: "Dirección de facturación de la llamada",
+                  example: "Calle Luna 45, Madrid 28015",
+                },
+                patient_address_line2: {
+                  type: "null",
+                  description: "Segunda línea de dirección (null para llamadas)",
+                  example: null,
+                },
+                clinic_name: {
+                  type: "string",
+                  description: "Nombre de la clínica",
+                  example: "Clínica Centro",
+                },
+                sessions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      session_id: {
+                        type: "integer",
+                        format: "int64",
+                        description: "ID de la sesión (llamada)",
+                        example: 789,
+                      },
+                      session_date: {
+                        type: "string",
+                        format: "date",
+                        description: "Fecha de la llamada (YYYY-MM-DD)",
+                        example: "2025-01-12",
+                      },
+                      price: {
+                        type: "number",
+                        format: "decimal",
+                        description: "Precio de la llamada",
+                        example: 60.00,
+                      },
+                    },
+                  },
+                  description: "Detalles de las llamadas pendientes de facturar",
+                },
+                pending_sessions_count: {
+                  type: "integer",
+                  description: "Número de llamadas pendientes",
+                  example: 2,
+                },
+                total_gross: {
+                  type: "number",
+                  format: "decimal",
+                  description: "Total bruto a facturar",
+                  example: 120.00,
+                },
+              },
+            },
+          },
         },
       },
     },

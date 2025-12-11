@@ -186,12 +186,61 @@ const getPendingInvoices = async (db, filters = {}) => {
     return invoice;
   });
 
+  // Obtener llamadas facturables pendientes agrupadas por persona
+  const [pendingCallsResult] = await db.execute(
+    `SELECT
+       CONCAT(s.call_first_name, ' ', s.call_last_name) as patient_full_name,
+       s.call_dni as dni,
+       s.call_billing_address as patient_address_line1,
+       c.name as clinic_name,
+       COUNT(s.id) as pending_sessions_count,
+       COALESCE(SUM(s.price), 0) as total_gross,
+       JSON_ARRAYAGG(
+         JSON_OBJECT(
+           'session_id', s.id,
+           'session_date', DATE_FORMAT(s.session_date, '%Y-%m-%d'),
+           'price', s.price
+         ) ORDER BY s.session_date ASC
+       ) as sessions
+     FROM sessions s
+     INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
+     WHERE s.is_active = true
+       AND s.invoiced = 0
+       AND s.is_call = true
+       AND s.is_billable_call = true
+       AND s.price > 0
+       AND MONTH(s.session_date) = ?
+       AND YEAR(s.session_date) = ?
+     GROUP BY s.call_first_name, s.call_last_name, s.call_dni, s.call_billing_address, c.name
+     ORDER BY patient_full_name ASC`,
+    [targetMonth, targetYear]
+  );
+
+  // Mapear llamadas facturables con la misma estructura que pending_invoices
+  const pendingCalls = pendingCallsResult.map(row => ({
+    patient_id: null,
+    patient_full_name: row.patient_full_name,
+    dni: row.dni || '',
+    email: null,
+    patient_address_line1: row.patient_address_line1 || '',
+    patient_address_line2: null,
+    clinic_name: row.clinic_name,
+    sessions: JSON.parse(row.sessions).map(session => ({
+      session_id: parseInt(session.session_id),
+      session_date: session.session_date,
+      price: parseFloat(session.price)
+    })),
+    pending_sessions_count: parseInt(row.pending_sessions_count),
+    total_gross: parseFloat(row.total_gross)
+  }));
+
   return {
     filters_applied: {
       month: targetMonth,
       year: targetYear
     },
-    pending_invoices: pendingInvoices
+    pending_invoices: pendingInvoices,
+    pending_calls: pendingCalls
   };
 };
 

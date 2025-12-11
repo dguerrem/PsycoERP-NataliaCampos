@@ -364,10 +364,76 @@ const redeemBonusUsage = async (db, session_id, bonus_id) => {
     }
 };
 
+// Actualizar fecha de expiración de un bono
+const updateBonusExpirationDate = async (db, bonus_id, expiration_date) => {
+    const query = `
+        UPDATE bonuses
+        SET expiration_date = ?
+        WHERE id = ?
+          AND is_active = true
+    `;
+
+    const [result] = await db.execute(query, [expiration_date, bonus_id]);
+
+    if (result.affectedRows === 0) {
+        return null;
+    }
+
+    // Obtener el bono actualizado
+    const getBonusQuery = `
+        SELECT
+            b.id,
+            b.patient_id,
+            b.sessions_number,
+            b.price_per_session,
+            b.total_price,
+            b.remaining_sessions,
+            DATE_FORMAT(b.expiration_date, '%Y-%m-%d') as expiration_date,
+            DATE_FORMAT(b.created_at, '%Y-%m-%d') as created_at,
+            DATE_FORMAT(b.updated_at, '%Y-%m-%d') as updated_at,
+            CONCAT(p.first_name, ' ', p.last_name) as patient_name
+        FROM bonuses b
+        LEFT JOIN patients p ON b.patient_id = p.id AND p.is_active = true
+        WHERE b.id = ?
+    `;
+
+    const [bonusRows] = await db.execute(getBonusQuery, [bonus_id]);
+
+    if (bonusRows.length === 0) {
+        return null;
+    }
+
+    const bonus = bonusRows[0];
+
+    // Calcular estado
+    let status = 'active';
+    if (bonus.remaining_sessions === 0) {
+        status = 'consumed';
+    } else if (bonus.expiration_date && new Date(bonus.expiration_date) < new Date()) {
+        status = 'expired';
+    }
+
+    return {
+        id: bonus.id,
+        patient_id: bonus.patient_id,
+        patient_name: bonus.patient_name,
+        sessions_number: bonus.sessions_number,
+        price_per_session: parseFloat(bonus.price_per_session),
+        total_price: parseFloat(bonus.total_price),
+        remaining_sessions: bonus.remaining_sessions,
+        used_sessions: bonus.sessions_number - bonus.remaining_sessions,
+        status: status,
+        expiration_date: bonus.expiration_date,
+        created_at: bonus.created_at,
+        updated_at: bonus.updated_at,
+    };
+};
+
 module.exports = {
     getBonuses,
     createBonus,
     hasActiveBonus,
     getActiveBonus,
     redeemBonusUsage,
+    updateBonusExpirationDate,
 };

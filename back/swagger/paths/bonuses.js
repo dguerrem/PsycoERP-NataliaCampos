@@ -360,6 +360,126 @@ const bonusesPaths = {
             },
         },
     },
+    "/api/bonuses/{id}": {
+        put: {
+            tags: ["Bonuses"],
+            summary: "Actualizar fecha de expiración de un bono",
+            description: "Actualiza únicamente la fecha de expiración de un bono existente",
+            parameters: [
+                {
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    description: "ID del bono a actualizar",
+                    schema: {
+                        type: "integer",
+                        format: "int64",
+                        example: 1,
+                    },
+                },
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            $ref: "#/components/schemas/UpdateBonusRequest",
+                        },
+                        example: {
+                            expiration_date: "2026-06-30"
+                        }
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Fecha de expiración actualizada exitosamente",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/UpdateBonusResponse",
+                            },
+                            example: {
+                                success: true,
+                                message: "Fecha de expiración actualizada exitosamente",
+                                data: {
+                                    id: 1,
+                                    patient_id: 5,
+                                    patient_name: "Juan Pérez García",
+                                    sessions_number: 10,
+                                    price_per_session: 50.00,
+                                    total_price: 500.00,
+                                    remaining_sessions: 7,
+                                    used_sessions: 3,
+                                    status: "active",
+                                    expiration_date: "2026-06-30",
+                                    created_at: "2025-01-15",
+                                    updated_at: "2025-12-11"
+                                }
+                            }
+                        },
+                    },
+                },
+                400: {
+                    description: "Error de validación",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            examples: {
+                                missingField: {
+                                    summary: "Campo faltante",
+                                    value: {
+                                        success: false,
+                                        error: "El campo expiration_date es obligatorio"
+                                    }
+                                },
+                                invalidFormat: {
+                                    summary: "Formato inválido",
+                                    value: {
+                                        success: false,
+                                        error: "El formato de expiration_date debe ser YYYY-MM-DD"
+                                    }
+                                },
+                                invalidDate: {
+                                    summary: "Fecha inválida",
+                                    value: {
+                                        success: false,
+                                        error: "La fecha de expiración no es válida"
+                                    }
+                                }
+                            }
+                        },
+                    },
+                },
+                404: {
+                    description: "Bono no encontrado",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "Bono no encontrado o no activo"
+                            }
+                        },
+                    },
+                },
+                500: {
+                    description: "Error del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
 };
 
 module.exports = bonusesPaths;

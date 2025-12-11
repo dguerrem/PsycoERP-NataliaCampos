@@ -1,4 +1,4 @@
-const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage } = require("../../models/bonuses/bonuses_model");
+const { getBonuses, createBonus, hasActiveBonus, getActiveBonus, redeemBonusUsage, updateBonusExpirationDate } = require("../../models/bonuses/bonuses_model");
 const logger = require("../../utils/logger");
 
 const obtenerBonuses = async (req, res) => {
@@ -281,8 +281,73 @@ const redimirBono = async (req, res) => {
     }
 };
 
+const actualizarBonus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { expiration_date } = req.body;
+
+        // Validar que el ID sea un número válido
+        if (isNaN(id) || parseInt(id) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El ID del bono debe ser un número válido",
+            });
+        }
+
+        // Validar que expiration_date sea obligatorio
+        if (!expiration_date) {
+            return res.status(400).json({
+                success: false,
+                error: "El campo expiration_date es obligatorio",
+            });
+        }
+
+        // Validar formato de fecha YYYY-MM-DD
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(expiration_date)) {
+            return res.status(400).json({
+                success: false,
+                error: "El formato de expiration_date debe ser YYYY-MM-DD",
+            });
+        }
+
+        // Validar que la fecha sea válida
+        const expirationDateObj = new Date(expiration_date);
+        if (isNaN(expirationDateObj.getTime())) {
+            return res.status(400).json({
+                success: false,
+                error: "La fecha de expiración no es válida",
+            });
+        }
+
+        // Actualizar la fecha de expiración
+        const bonusActualizado = await updateBonusExpirationDate(req.db, parseInt(id), expiration_date);
+
+        if (!bonusActualizado) {
+            return res.status(404).json({
+                success: false,
+                error: "Bono no encontrado o no activo",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Fecha de expiración actualizada exitosamente",
+            data: bonusActualizado,
+        });
+
+    } catch (err) {
+        logger.error("Error al actualizar bono:", err.message);
+        res.status(500).json({
+            success: false,
+            error: "Error al actualizar el bono",
+        });
+    }
+};
+
 module.exports = {
     obtenerBonuses,
     crearBonus,
     redimirBono,
+    actualizarBonus,
 };

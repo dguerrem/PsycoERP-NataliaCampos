@@ -137,7 +137,6 @@ const getPendingInvoices = async (db, filters = {}) => {
        AND s.is_active = true
        AND s.invoiced = 0
        AND s.payment_method != 'pendiente'
-       AND s.payment_method != 'bono'
        AND MONTH(s.session_date) = ?
        AND YEAR(s.session_date) = ?
      INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
@@ -219,12 +218,11 @@ const createInvoice = async (db, invoiceData) => {
     // 1. Obtener información de las sesiones a facturar
     const placeholders = session_ids.map(() => '?').join(',');
     const [sessionsData] = await connection.execute(
-      `SELECT id, price, session_date, payment_method
+      `SELECT id, price, session_date
        FROM sessions
        WHERE id IN (${placeholders})
          AND is_active = true
-         AND invoiced = 0
-         AND payment_method != 'bono'`,
+         AND invoiced = 0`,
       session_ids
     );
 
@@ -233,7 +231,7 @@ const createInvoice = async (db, invoiceData) => {
     }
 
     if (sessionsData.length !== session_ids.length) {
-      throw new Error('Algunas sesiones no están disponibles para facturar (ya facturadas, inactivas o pagadas con bono)');
+      throw new Error('Algunas sesiones no están disponibles para facturar (ya facturadas o inactivas)');
     }
 
     // Calcular total (suma de precios de todas las sesiones)
@@ -336,8 +334,7 @@ const getIssuedInvoices = async (db, filters = {}) => {
         `SELECT
            s.id as session_id,
            DATE_FORMAT(s.session_date, '%Y-%m-%d') as session_date,
-           s.price,
-           s.payment_method
+           s.price
          FROM invoice_sessions ist
          INNER JOIN sessions s ON ist.session_id = s.id AND s.is_active = true
          WHERE ist.invoice_id = ?
@@ -362,8 +359,7 @@ const getIssuedInvoices = async (db, filters = {}) => {
         sessions: sessionsDetails.map(session => ({
           session_id: parseInt(session.session_id),
           session_date: session.session_date,
-          price: parseFloat(session.price),
-          payment_method: session.payment_method
+          price: parseFloat(session.price)
         })),
         sessions_count: sessionsDetails.length,
         total: parseFloat(row.total) || 0,
@@ -454,7 +450,6 @@ const getPendingInvoicesOfClinics = async (db, filters = {}) => {
        AND s.is_active = true
        AND s.invoiced = 0
        AND s.payment_method != 'pendiente'
-       AND s.payment_method != 'bono'
        AND MONTH(s.session_date) = ?
        AND YEAR(s.session_date) = ?
      INNER JOIN (
@@ -467,7 +462,6 @@ const getPendingInvoicesOfClinics = async (db, filters = {}) => {
        WHERE is_active = true
          AND invoiced = 0
          AND payment_method != 'pendiente'
-         AND payment_method != 'bono'
          AND MONTH(session_date) = ?
          AND YEAR(session_date) = ?
        GROUP BY clinic_id, price
@@ -544,7 +538,6 @@ const createInvoiceOfClinics = async (db, invoiceData) => {
          AND s.is_active = true
          AND s.invoiced = 0
          AND s.payment_method != 'pendiente'
-         AND s.payment_method != 'bono'
          AND MONTH(s.session_date) = ?
          AND YEAR(s.session_date) = ?
          AND c.is_active = true

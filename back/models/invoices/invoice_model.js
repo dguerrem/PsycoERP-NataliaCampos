@@ -343,7 +343,7 @@ const getIssuedInvoices = async (db, filters = {}) => {
   const targetMonth = month || (currentDate.getMonth() + 1);
   const targetYear = year || currentDate.getFullYear();
 
-  // Primero obtenemos las facturas con información del paciente
+  // Obtenemos las facturas de pacientes con información del paciente
   const [invoicesResult] = await db.execute(
     `SELECT
        i.id,
@@ -372,6 +372,28 @@ const getIssuedInvoices = async (db, filters = {}) => {
      WHERE i.is_active = true
        AND i.month = ?
        AND i.year = ?
+       AND i.patient_id IS NOT NULL
+     ORDER BY i.invoice_date DESC, i.invoice_number DESC`,
+    [targetMonth, targetYear]
+  );
+
+  // Obtenemos las facturas de llamadas
+  const [callInvoicesResult] = await db.execute(
+    `SELECT
+       i.id,
+       i.invoice_number,
+       i.invoice_date,
+       i.patient_id,
+       i.total,
+       i.concept,
+       i.month,
+       i.year,
+       i.created_at
+     FROM invoices i
+     WHERE i.is_active = true
+       AND i.month = ?
+       AND i.year = ?
+       AND i.patient_id IS NULL
      ORDER BY i.invoice_date DESC, i.invoice_number DESC`,
     [targetMonth, targetYear]
   );
@@ -435,13 +457,69 @@ const getIssuedInvoices = async (db, filters = {}) => {
     })
   );
 
+  // Para cada factura de llamada, obtener los detalles incluyendo info de la primera sesión para datos de facturación
+  const callInvoices = await Promise.all(
+    callInvoicesResult.map(async (row) => {
+      // Obtener detalles de las sesiones (llamadas) de esta factura
+      const [sessionsDetails] = await db.execute(
+        `SELECT
+           s.id as session_id,
+           DATE_FORMAT(s.session_date, '%Y-%m-%d') as session_date,
+           s.price,
+           s.call_first_name,
+           s.call_last_name,
+           s.call_dni,
+           s.call_billing_address
+         FROM invoice_sessions ist
+         INNER JOIN sessions s ON ist.session_id = s.id AND s.is_active = true
+         WHERE ist.invoice_id = ?
+         ORDER BY s.session_date ASC`,
+        [row.id]
+      );
+
+      // Formatear fecha a dd/mm/yyyy
+      const date = new Date(row.invoice_date);
+      const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+
+      // Usar datos de la primera sesión para la información del "paciente" (persona que llama)
+      const firstSession = sessionsDetails[0];
+      const patient_full_name = firstSession
+        ? `${firstSession.call_first_name} ${firstSession.call_last_name}`
+        : '';
+
+      const callInvoice = {
+        id: parseInt(row.id),
+        invoice_number: row.invoice_number,
+        invoice_date: formattedDate,
+        patient_id: null,
+        patient_full_name: patient_full_name,
+        dni: firstSession?.call_dni || '',
+        email: null,
+        patient_address_line1: firstSession?.call_billing_address || '',
+        patient_address_line2: null,
+        sessions: sessionsDetails.map(session => ({
+          session_id: parseInt(session.session_id),
+          session_date: session.session_date,
+          price: parseFloat(session.price)
+        })),
+        sessions_count: sessionsDetails.length,
+        total: parseFloat(row.total) || 0,
+        concept: row.concept || ''
+      };
+
+      return callInvoice;
+    })
+  );
+
   return {
     filters_applied: {
       month: targetMonth,
       year: targetYear
     },
     total_invoices: invoices.length,
-    invoices: invoices
+    invoices: invoices,
+    total_call_invoices: callInvoices.length,
+    call_invoices: callInvoices
   };
 };
 

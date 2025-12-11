@@ -2217,6 +2217,110 @@ const definitions = {
               },
             },
           },
+          total_call_invoices: {
+            type: "integer",
+            description: "Número total de facturas de llamadas encontradas",
+            example: 3,
+          },
+          call_invoices: {
+            type: "array",
+            description: "Facturas de llamadas (misma estructura que invoices pero sin progenitors_data y con patient_id null)",
+            items: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID de la factura",
+                  example: 5,
+                },
+                invoice_number: {
+                  type: "string",
+                  description: "Número de factura",
+                  example: "2025-005",
+                },
+                invoice_date: {
+                  type: "string",
+                  format: "date",
+                  description: "Fecha de emisión (formato dd/mm/yyyy)",
+                  example: "18/01/2025",
+                },
+                patient_id: {
+                  type: "null",
+                  description: "ID del paciente (null para llamadas)",
+                  example: null,
+                },
+                patient_full_name: {
+                  type: "string",
+                  description: "Nombre completo de la persona que llama",
+                  example: "Laura Martínez Ruiz",
+                },
+                dni: {
+                  type: "string",
+                  description: "DNI de la persona que llama",
+                  example: "87654321X",
+                },
+                email: {
+                  type: "null",
+                  description: "Email (null para llamadas)",
+                  example: null,
+                },
+                patient_address_line1: {
+                  type: "string",
+                  description: "Dirección de facturación",
+                  example: "Calle Sol 45, Madrid 28013",
+                },
+                patient_address_line2: {
+                  type: "null",
+                  description: "Segunda línea de dirección (null para llamadas)",
+                  example: null,
+                },
+                sessions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      session_id: {
+                        type: "integer",
+                        format: "int64",
+                        description: "ID de la sesión (llamada)",
+                        example: 234,
+                      },
+                      session_date: {
+                        type: "string",
+                        format: "date",
+                        description: "Fecha de la llamada (YYYY-MM-DD)",
+                        example: "2025-01-15",
+                      },
+                      price: {
+                        type: "number",
+                        format: "decimal",
+                        description: "Precio de la llamada",
+                        example: 60.00,
+                      },
+                    },
+                  },
+                  description: "Detalles de las llamadas facturadas",
+                },
+                sessions_count: {
+                  type: "integer",
+                  description: "Número de llamadas facturadas",
+                  example: 2,
+                },
+                total: {
+                  type: "number",
+                  format: "decimal",
+                  description: "Total de la factura",
+                  example: 120.00,
+                },
+                concept: {
+                  type: "string",
+                  description: "Concepto de la factura",
+                  example: "Llamadas de consulta - Enero 2025",
+                },
+              },
+            },
+          },
         },
       },
     },

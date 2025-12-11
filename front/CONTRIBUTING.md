@@ -18,7 +18,8 @@ src/
 │  │   ├─ calendario/
 │  │   ├─ pacientes/
 │  │   ├─ sesiones/
-│  │   └─ facturacion/
+│  │   ├─ facturacion/
+│  │   ├─ bonuses/            # Gestión de bonos
 │  │   └─ configuration/
 │  ├─ app-routing.ts
 │  └─ app.component.ts

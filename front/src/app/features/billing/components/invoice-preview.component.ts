@@ -12,7 +12,7 @@ export interface InvoicePreviewData {
   total_gross: number;
   invoice_number: string;
   invoice_date: string;
-  sessions?: { session_id: number; session_date: string; price: number; }[];
+  sessions?: { session_id: number; session_date: string; price: number; payment_method?: string; }[];
 }
 
 @Component({
@@ -28,6 +28,7 @@ export class InvoicePreviewComponent {
   @Input() isOpen: boolean = false;
   @Input() invoiceData: InvoicePreviewData | null = null;
   @Input() userData: User | null = null;
+  @Input() allowDownload: boolean = false; // Solo permitir descarga desde existing-invoices
 
   @Output() onClose = new EventEmitter<void>();
   @Output() onPrint = new EventEmitter<void>();

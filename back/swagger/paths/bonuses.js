@@ -332,6 +332,10 @@ const bonusesPaths = {
                         schema: {
                             $ref: "#/components/schemas/RedeemBonusRequest",
                         },
+                        example: {
+                            patient_id: 5,
+                            session_id: 123
+                        }
                     },
                 },
             },

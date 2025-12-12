@@ -404,10 +404,40 @@ const eliminarBonus = async (req, res) => {
     }
 };
 
+const verificarBonoActivo = async (req, res) => {
+    try {
+        const { patient_id } = req.params;
+
+        // Validar que el patient_id sea un número válido
+        if (isNaN(patient_id) || parseInt(patient_id) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El patient_id debe ser un número válido",
+            });
+        }
+
+        // Verificar si tiene bono activo disponible
+        const tieneBonoActivo = await hasActiveBonus(req.db, parseInt(patient_id));
+
+        res.status(200).json({
+            success: true,
+            has_active_bonus: tieneBonoActivo,
+        });
+
+    } catch (err) {
+        logger.error("Error al verificar bono activo:", err.message);
+        res.status(500).json({
+            success: false,
+            error: "Error al verificar si el paciente tiene bono activo",
+        });
+    }
+};
+
 module.exports = {
     obtenerBonuses,
     crearBonus,
     redimirBono,
     actualizarBonus,
     eliminarBonus,
+    verificarBonoActivo,
 };

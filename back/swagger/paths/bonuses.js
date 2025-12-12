@@ -1,4 +1,87 @@
 const bonusesPaths = {
+    "/api/bonuses/check-active/{patient_id}": {
+        get: {
+            tags: ["Bonuses"],
+            summary: "Verificar si un paciente tiene un bono activo disponible",
+            description: "Verifica si el paciente tiene un bono activo con sesiones disponibles y que no haya expirado",
+            parameters: [
+                {
+                    name: "patient_id",
+                    in: "path",
+                    required: true,
+                    description: "ID del paciente a verificar",
+                    schema: {
+                        type: "integer",
+                        format: "int64",
+                        example: 5,
+                    },
+                },
+            ],
+            responses: {
+                200: {
+                    description: "Verificación exitosa",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    success: {
+                                        type: "boolean",
+                                        example: true,
+                                    },
+                                    has_active_bonus: {
+                                        type: "boolean",
+                                        description: "true si el paciente tiene un bono activo disponible, false en caso contrario",
+                                        example: true,
+                                    },
+                                },
+                            },
+                            examples: {
+                                hasBonus: {
+                                    summary: "Paciente con bono activo",
+                                    value: {
+                                        success: true,
+                                        has_active_bonus: true,
+                                    },
+                                },
+                                noBonus: {
+                                    summary: "Paciente sin bono activo",
+                                    value: {
+                                        success: true,
+                                        has_active_bonus: false,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                400: {
+                    description: "ID de paciente inválido",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                            example: {
+                                success: false,
+                                error: "El patient_id debe ser un número válido",
+                            },
+                        },
+                    },
+                },
+                500: {
+                    description: "Error del servidor",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/ErrorResponse",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
     "/api/bonuses": {
         get: {
             tags: ["Bonuses"],

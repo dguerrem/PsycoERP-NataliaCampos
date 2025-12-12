@@ -7,9 +7,11 @@ const {
     redimirBono,
     actualizarBonus,
     eliminarBonus,
+    verificarBonoActivo,
 } = require("../../controllers/bonuses/bonuses_controller");
 
 router.get("/", obtenerBonuses);
+router.get("/check-active/:patient_id", verificarBonoActivo);
 router.post("/", crearBonus);
 router.post("/redeem", redimirBono);
 router.put("/:id", actualizarBonus);

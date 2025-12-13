@@ -598,7 +598,7 @@ const invoicesPaths = {
       tags: ["Invoices"],
       summary: "Obtener KPIs de facturación",
       description:
-        "Obtiene los KPIs de facturación incluyendo: 1) Total facturas emitidas, 2) Total bruto histórico, 3) Total bruto filtrado por mes/año, 4) Total neto filtrado por mes/año, 5) Total neto por clínica filtrado por mes/año. Si no se especifica mes/año, usa el mes y año actual.",
+        "Obtiene los KPIs de facturación incluyendo bonos en los cálculos: 1) Total facturas emitidas, 2) Total bruto histórico (sesiones + bonos vendidos), 3) Total bruto filtrado por mes/año (sesiones + bonos vendidos en el período), 4) Total neto filtrado por mes/año (neto de sesiones + bonos del período que son 100% neto), 5) Total neto por clínica filtrado por mes/año (solo sesiones). Si no se especifica mes/año, usa el mes y año actual.",
       parameters: [
         {
           name: "month",

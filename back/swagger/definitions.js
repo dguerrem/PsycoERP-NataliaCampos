@@ -1721,24 +1721,24 @@ const definitions = {
       card2_total_gross_historic: {
         type: "number",
         format: "decimal",
-        description: "Card 2: Total facturado bruto histórico en euros",
+        description: "Card 2: Total facturado bruto histórico en euros (sesiones + bonos vendidos)",
         example: 15000.00,
       },
       card3_total_gross_filtered: {
         type: "number",
         format: "decimal",
-        description: "Card 3: Total facturado bruto en el mes/año filtrado en euros",
+        description: "Card 3: Total facturado bruto en el mes/año filtrado en euros (sesiones + bonos vendidos en el período)",
         example: 2400.00,
       },
       card4_total_net_filtered: {
         type: "number",
         format: "decimal",
-        description: "Card 4: Total facturado neto para la psicóloga en el mes/año filtrado en euros",
+        description: "Card 4: Total facturado neto para la psicóloga en el mes/año filtrado en euros (neto de sesiones con % de clínica + bonos que son 100% neto)",
         example: 2040.00,
       },
       card5_total_net_by_clinic: {
         type: "array",
-        description: "Card 5: Total facturado neto por clínica en el mes/año filtrado",
+        description: "Card 5: Total facturado neto por clínica en el mes/año filtrado (solo sesiones, los bonos no están asociados a clínicas)",
         items: {
           $ref: "#/components/schemas/InvoiceNetByClinic",
         },

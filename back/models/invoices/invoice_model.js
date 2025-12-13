@@ -17,6 +17,7 @@ const getInvoicesKPIs = async (db, filters = {}) => {
 
   // ============================================
   // CARD 2: Total facturado bruto (histórico)
+  // Incluye sesiones + bonos vendidos
   // ============================================
   const [totalGrossResult] = await db.execute(
     `SELECT COALESCE(SUM(s.price), 0) as total_gross
@@ -24,10 +25,21 @@ const getInvoicesKPIs = async (db, filters = {}) => {
      INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
      WHERE s.is_active = true`
   );
-  const totalGrossHistoric = parseFloat(totalGrossResult[0].total_gross) || 0;
+  const sessionsGrossHistoric = parseFloat(totalGrossResult[0].total_gross) || 0;
+
+  // Sumar el total de bonos vendidos (histórico)
+  const [bonusesHistoricResult] = await db.execute(
+    `SELECT COALESCE(SUM(total_price), 0) as total_bonuses
+     FROM bonuses
+     WHERE is_active = true`
+  );
+  const bonusesGrossHistoric = parseFloat(bonusesHistoricResult[0].total_bonuses) || 0;
+
+  const totalGrossHistoric = sessionsGrossHistoric + bonusesGrossHistoric;
 
   // ============================================
   // CARD 3: Total facturado bruto (filtrado por mes/año)
+  // Incluye sesiones + bonos vendidos en el período
   // ============================================
   const [totalGrossFilteredResult] = await db.execute(
     `SELECT COALESCE(SUM(s.price), 0) as total_gross_filtered
@@ -38,11 +50,24 @@ const getInvoicesKPIs = async (db, filters = {}) => {
        AND YEAR(s.session_date) = ?`,
     [targetMonth, targetYear]
   );
-  const totalGrossFiltered = parseFloat(totalGrossFilteredResult[0].total_gross_filtered) || 0;
+  const sessionsGrossFiltered = parseFloat(totalGrossFilteredResult[0].total_gross_filtered) || 0;
+
+  // Sumar bonos vendidos en el período filtrado
+  const [bonusesFilteredResult] = await db.execute(
+    `SELECT COALESCE(SUM(total_price), 0) as total_bonuses_filtered
+     FROM bonuses
+     WHERE is_active = true
+       AND MONTH(created_at) = ?
+       AND YEAR(created_at) = ?`,
+    [targetMonth, targetYear]
+  );
+  const bonusesGrossFiltered = parseFloat(bonusesFilteredResult[0].total_bonuses_filtered) || 0;
+
+  const totalGrossFiltered = sessionsGrossFiltered + bonusesGrossFiltered;
 
   // ============================================
   // CARD 4: Total facturado NETO (filtrado por mes/año)
-  // Calculado con: sessions.price * (clinics.percentage / 100)
+  // Calculado con: sessions.price * (clinics.percentage / 100) + bonos (100% neto)
   // ============================================
   const [totalNetFilteredResult] = await db.execute(
     `SELECT COALESCE(SUM(s.price * (c.percentage / 100)), 0) as total_net_filtered
@@ -53,7 +78,10 @@ const getInvoicesKPIs = async (db, filters = {}) => {
        AND YEAR(s.session_date) = ?`,
     [targetMonth, targetYear]
   );
-  const totalNetFiltered = parseFloat(totalNetFilteredResult[0].total_net_filtered) || 0;
+  const sessionsNetFiltered = parseFloat(totalNetFilteredResult[0].total_net_filtered) || 0;
+
+  // Los bonos son 100% neto para la psicóloga (no hay comisión de clínica)
+  const totalNetFiltered = sessionsNetFiltered + bonusesGrossFiltered;
 
   // ============================================
   // CARD 5: Total facturado NETO por clínica (filtrado por mes/año)

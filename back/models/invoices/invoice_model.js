@@ -85,9 +85,11 @@ const getInvoicesKPIs = async (db, filters = {}) => {
 
   // ============================================
   // CARD 5: Total facturado NETO por clínica (filtrado por mes/año)
+  // Incluye bonos en la clínica principal del usuario
   // ============================================
   const [totalNetByClinicResult] = await db.execute(
     `SELECT
+       c.id as clinic_id,
        c.name as clinic_name,
        c.percentage as clinic_percentage,
        COUNT(s.id) as total_sessions,
@@ -104,13 +106,24 @@ const getInvoicesKPIs = async (db, filters = {}) => {
     [targetMonth, targetYear]
   );
 
-  const totalNetByClinic = totalNetByClinicResult.map(row => ({
-    clinic_name: row.clinic_name,
-    total_sessions: parseInt(row.total_sessions) || 0,
-    total_gross: parseFloat(row.total_gross) || 0,
-    clinic_percentage: parseFloat(row.clinic_percentage) || 0,
-    total_net: parseFloat(row.total_net) || 0
-  }));
+  const totalNetByClinic = totalNetByClinicResult.map(row => {
+    let clinicData = {
+      clinic_name: row.clinic_name,
+      total_sessions: parseInt(row.total_sessions) || 0,
+      total_gross: parseFloat(row.total_gross) || 0,
+      clinic_percentage: parseFloat(row.clinic_percentage) || 0,
+      total_net: parseFloat(row.total_net) || 0
+    };
+
+    // Añadir bonos a la clínica principal del usuario
+    if (filters.principal_clinic_id && row.clinic_id === filters.principal_clinic_id) {
+      clinicData.total_gross += bonusesGrossFiltered;
+      clinicData.total_net += bonusesGrossFiltered; // Bonos son 100% neto
+      clinicData.bonuses_revenue = parseFloat(bonusesGrossFiltered.toFixed(2));
+    }
+
+    return clinicData;
+  });
 
   return {
     filters_applied: {

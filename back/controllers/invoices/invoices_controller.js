@@ -24,6 +24,9 @@ const obtenerKPIsFacturacion = async (req, res) => {
     const filters = {};
     if (month) filters.month = parseInt(month);
     if (year) filters.year = parseInt(year);
+    if (req.user && req.user.principal_clinic_id) {
+      filters.principal_clinic_id = req.user.principal_clinic_id;
+    }
 
     const kpis = await getInvoicesKPIs(req.db, filters);
 

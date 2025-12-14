@@ -1738,7 +1738,7 @@ const definitions = {
       },
       card5_total_net_by_clinic: {
         type: "array",
-        description: "Card 5: Total facturado neto por clínica en el mes/año filtrado (solo sesiones, los bonos no están asociados a clínicas)",
+        description: "Card 5: Total facturado neto por clínica en el mes/año filtrado (sesiones + bonos en la clínica principal del usuario)",
         items: {
           $ref: "#/components/schemas/InvoiceNetByClinic",
         },
@@ -1767,11 +1767,34 @@ const definitions = {
         description: "Nombre de la clínica",
         example: "Clínica Centro",
       },
+      total_sessions: {
+        type: "integer",
+        description: "Número de sesiones en esta clínica",
+        example: 15,
+      },
+      total_gross: {
+        type: "number",
+        format: "decimal",
+        description: "Total bruto facturado en esta clínica en euros (sesiones + bonos si es la clínica principal)",
+        example: 1200.00,
+      },
+      clinic_percentage: {
+        type: "number",
+        format: "decimal",
+        description: "Porcentaje de comisión de la clínica",
+        example: 85,
+      },
       total_net: {
         type: "number",
         format: "decimal",
-        description: "Total neto facturado en esta clínica en euros",
+        description: "Total neto facturado en esta clínica en euros (incluye bonos si es la clínica principal)",
         example: 1020.00,
+      },
+      bonuses_revenue: {
+        type: "number",
+        format: "decimal",
+        description: "Ingresos por bonos (solo presente en la clínica principal del usuario)",
+        example: 500.00,
       },
     },
   },

@@ -31,6 +31,7 @@ const authenticateToken = async (req, res, next) => {
       id: user.id,
       email: user.email,
       name: user.name,
+      principal_clinic_id: user.principal_clinic_id,
     };
 
     next();

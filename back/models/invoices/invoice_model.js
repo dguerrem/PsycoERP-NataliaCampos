@@ -178,6 +178,7 @@ const getPendingInvoices = async (db, filters = {}) => {
        AND s.is_active = true
        AND s.invoiced = 0
        AND s.payment_method != 'pendiente'
+       AND s.payment_method != 'bono'
        AND MONTH(s.session_date) = ?
        AND YEAR(s.session_date) = ?
      INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true

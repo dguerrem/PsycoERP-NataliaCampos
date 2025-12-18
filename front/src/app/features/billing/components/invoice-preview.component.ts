@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { User } from '../../../core/models/user.model';
 import { PdfGeneratorService } from '../services/pdf-generator.service';
 import { InvoiceTemplateComponent } from './invoice-template.component';
+import { ProgenitorsData } from '../models/billing.models';
 
 export interface InvoicePreviewData {
   patient_full_name: string;
@@ -13,6 +14,7 @@ export interface InvoicePreviewData {
   invoice_number: string;
   invoice_date: string;
   sessions?: { session_id: number; session_date: string; price: number; payment_method?: string; }[];
+  progenitors_data?: ProgenitorsData;
 }
 
 @Component({

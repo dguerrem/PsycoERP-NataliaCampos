@@ -56,9 +56,13 @@ import { InvoicePreviewData } from './invoice-preview.component';
           <div>
             <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">DATOS DEL RECEPTOR</h3>
             <div class="space-y-1 text-gray-700">
-              <div class="font-semibold">{{ invoiceData.patient_full_name }}</div>
-              <div>DNI: {{ invoiceData.dni }}</div>
-              <div>Email: {{ invoiceData.email }}</div>
+              <div class="font-semibold">{{ getReceiverName() }}</div>
+              <div>DNI: {{ getReceiverDni() }}</div>
+              @if (hasProgenitorData()) {
+                <div>Teléfono: {{ getReceiverPhone() }}</div>
+              } @else {
+                <div>Email: {{ invoiceData.email }}</div>
+              }
             </div>
           </div>
         </div>
@@ -168,6 +172,40 @@ export class InvoiceTemplateComponent {
     // Si está en formato ISO (YYYY-MM-DD), convertirla a DD/MM/YYYY
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Verifica si hay datos de progenitor disponibles
+   */
+  hasProgenitorData(): boolean {
+    return !!this.invoiceData?.progenitors_data?.progenitor1?.full_name;
+  }
+
+  /**
+   * Obtiene el nombre del receptor (progenitor1 si existe, sino paciente)
+   */
+  getReceiverName(): string {
+    if (this.hasProgenitorData()) {
+      return this.invoiceData!.progenitors_data!.progenitor1.full_name!;
+    }
+    return this.invoiceData?.patient_full_name || '';
+  }
+
+  /**
+   * Obtiene el DNI del receptor (progenitor1 si existe, sino paciente)
+   */
+  getReceiverDni(): string {
+    if (this.hasProgenitorData()) {
+      return this.invoiceData!.progenitors_data!.progenitor1.dni || '';
+    }
+    return this.invoiceData?.dni || '';
+  }
+
+  /**
+   * Obtiene el teléfono del progenitor
+   */
+  getReceiverPhone(): string {
+    return this.invoiceData?.progenitors_data?.progenitor1?.phone || '';
   }
 
   /**

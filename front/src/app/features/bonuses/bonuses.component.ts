@@ -13,6 +13,7 @@ import { PatientSelectorComponent } from '../../shared/components/patient-select
 import { PatientSelector } from '../../shared/models/patient.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
+import { ReusableModalComponent } from '../../shared/components/reusable-modal/reusable-modal.component';
 import { environment } from '../../../environments/environment';
 import { BonusesService } from './services/bonuses.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -26,7 +27,8 @@ import { ToastService } from '../../core/services/toast.service';
     ReactiveFormsModule,
     PatientSelectorComponent,
     PaginationComponent,
-    SectionHeaderComponent
+    SectionHeaderComponent,
+    ReusableModalComponent
   ],
   templateUrl: './bonuses.component.html',
   styleUrl: './bonuses.component.scss',
@@ -55,9 +57,9 @@ export class BonusesComponent implements OnInit {
   patientFilterControl: FormGroup;
 
   constructor() {
-    // Calculate default expiry date (1 year from now)
+    // Calculate default expiry date (10 weeks from now)
     const defaultExpiryDate = new Date();
-    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 1);
+    defaultExpiryDate.setDate(defaultExpiryDate.getDate() + 70); // 10 weeks = 70 days
     const defaultExpiryString = defaultExpiryDate.toISOString().split('T')[0];
 
     this.bonusForm = this.fb.group({
@@ -211,9 +213,9 @@ export class BonusesComponent implements OnInit {
 
     this.isCreatingBonus.set(true);
 
-    // Calculate default expiry date (1 year from now)
+    // Calculate default expiry date (10 weeks from now)
     const defaultExpiryDate = new Date();
-    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 1);
+    defaultExpiryDate.setDate(defaultExpiryDate.getDate() + 70); // 10 weeks = 70 days
     const defaultExpiryString = defaultExpiryDate.toISOString().split('T')[0];
 
     this.bonusForm.reset({
@@ -344,5 +346,20 @@ export class BonusesComponent implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * Verifica si un bono puede ser eliminado
+   * Condiciones: sesiones usadas = 0 O fecha de expiración > fecha actual
+   */
+  canDeleteBonus(bonus: Bonus): boolean {
+    if (bonus.used_sessions === 0) {
+      return true;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expirationDate = new Date(bonus.expiration_date);
+    expirationDate.setHours(0, 0, 0, 0);
+    return expirationDate > today;
   }
 }

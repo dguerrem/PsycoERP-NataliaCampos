@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
   api: {
-    baseUrl: 'https://TODO:Cambiar por el de natalia.com/api',
+    baseUrl: 'https://test.nclpsicologa.com/api',
     timeout: 30000,
     version: 'v1'
   },

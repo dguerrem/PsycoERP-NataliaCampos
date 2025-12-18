@@ -750,6 +750,7 @@ export class BillingComponent implements OnInit {
       )}`,
       invoice_date: new Date().toISOString().split('T')[0],
       sessions: invoice.sessions,
+      progenitors_data: invoice.progenitors_data,
     };
 
     this.previewInvoiceData.set(previewData);
@@ -771,6 +772,7 @@ export class BillingComponent implements OnInit {
       invoice_number: invoice.invoice_number,
       invoice_date: invoice.invoice_date,
       sessions: invoice.sessions,
+      progenitors_data: invoice.progenitors_data,
     };
 
     this.previewInvoiceData.set(previewData);
@@ -1282,10 +1284,19 @@ export class BillingComponent implements OnInit {
    */
   private generateInvoiceHTML(invoice: ExistingInvoice): string {
     const user = this.userData();
-    const irpf = Number(user?.irpf || 0);
-    const retentionAmount = invoice.total * (irpf / 100);
-    const totalWithIrpf = invoice.total - retentionAmount;
     const paymentMethods = this.getPaymentMethodsForHTML(invoice.sessions);
+
+    // Determinar si usar datos de progenitor o paciente
+    const hasProgenitor = !!invoice.progenitors_data?.progenitor1?.full_name;
+    const receiverName = hasProgenitor
+      ? invoice.progenitors_data!.progenitor1.full_name!
+      : invoice.patient_full_name;
+    const receiverDni = hasProgenitor
+      ? invoice.progenitors_data!.progenitor1.dni || ''
+      : invoice.dni;
+    const receiverContact = hasProgenitor
+      ? `Teléfono: ${invoice.progenitors_data!.progenitor1.phone || ''}`
+      : `Email: ${invoice.email}`;
 
     return `
       <div style="max-width: 800px; margin: 0 auto; background: white; padding: 32px; font-family: system-ui, -apple-system, sans-serif;">
@@ -1307,28 +1318,30 @@ export class BillingComponent implements OnInit {
           </div>
         </div>
 
-        <!-- Facturar a -->
-        <div style="margin-bottom: 32px;">
-          <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">FACTURAR A</h3>
-          <div style="color: #374151;">
-            <div style="font-weight: bold; font-size: 20px; color: #111827; margin-bottom: 4px;">${
-              invoice.patient_full_name
-            }</div>
-            <div style="margin-bottom: 2px;">${
-              invoice.patient_address_line1
-            }</div>
-            <div style="margin-bottom: 2px;">${
-              invoice.patient_address_line2
-            }</div>
-            <div style="font-weight: 500; margin-top: 4px;">${invoice.dni}</div>
+        <!-- Emisor y Receptor -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px;">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">DATOS DEL EMISOR</h3>
+            <div style="color: #374151;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${user?.name || ''}</div>
+              <div style="margin-bottom: 2px;">DNI: ${user?.dni || ''}</div>
+              <div style="margin-bottom: 2px;">${user?.street || ''} ${user?.street_number || ''}${user?.door ? `, ${user.door}` : ''}</div>
+              <div>${user?.postal_code || ''} ${user?.city || ''}, ${user?.province || ''}</div>
+            </div>
           </div>
-        </div>
-
-        <!-- Abono en cuenta -->
-        <div style="margin-bottom: 32px;">
-          <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">ABONO EN CUENTA</h3>
-          <div style="font-family: monospace; font-size: 18px; font-weight: 600; color: #374151;">
-            ${user?.iban || 'N/A'}
+          <div>
+            <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">DATOS DEL RECEPTOR</h3>
+            <div style="color: #374151;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${receiverName}</div>
+              <div style="margin-bottom: 2px;">DNI: ${receiverDni}</div>
+              <div style="margin-bottom: 2px;">${
+                invoice.patient_address_line1
+              }</div>
+              <div style="margin-bottom: 2px;">${
+                invoice.patient_address_line2
+              }</div>
+              <div>${receiverContact}</div>
+            </div>
           </div>
         </div>
 
@@ -1356,27 +1369,19 @@ export class BillingComponent implements OnInit {
           <div style="width: 384px;">
             <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px;">
               <div style="margin-bottom: 12px; display: flex; justify-content: space-between; color: #374151;">
-                <span>SERV. DE ATENCIÓN PSICOLÓGICA:</span>
+                <span>Base imponible:</span>
                 <span style="font-weight: 600;">${this.formatCurrency(
                   invoice.total
                 )}</span>
               </div>
               <div style="margin-bottom: 12px; display: flex; justify-content: space-between; color: #374151;">
-                <span>IVA (EXENTO):</span>
+                <span>IVA:</span>
                 <span>0,00€</span>
-              </div>
-              <div style="margin-bottom: 12px; display: flex; justify-content: space-between; color: #374151;">
-                <span>RETENCIÓN (${irpf}%):</span>
-                <span style="color: #dc2626;">${this.formatCurrency(
-                  retentionAmount
-                )}</span>
               </div>
               <div style="border-top: 1px solid #d1d5db; padding-top: 12px;">
                 <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; color: #111827;">
-                  <span>TOTAL A INGRESAR:</span>
-                  <span style="color: #16a34a;">${this.formatCurrency(
-                    totalWithIrpf
-                  )}</span>
+                  <span>TOTAL:</span>
+                  <span>${this.formatCurrency(invoice.total)}</span>
                 </div>
               </div>
               ${paymentMethods ? `
@@ -1392,8 +1397,18 @@ export class BillingComponent implements OnInit {
         </div>
 
         <!-- Nota legal -->
-        <div style="text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 16px;">
-          <p style="margin: 0;">Servicio exento de IVA según el artículo 20 3a de la ley 37/1992 del impuesto sobre el Valor Añadido.</p>
+        <div style="text-align: justify; font-size: 12px; color: #4b5563; margin-bottom: 16px; line-height: 1.5;">
+          <p style="margin: 0 0 8px 0; font-weight: 600;">Factura exenta de IVA en base al artículo 20 de la Ley del IVA 37/1992</p>
+          <p style="margin: 0;">
+            <span style="font-weight: 600;">Información sobre protección de datos:</span> Responsable: NATALIA CAMPOS LÓPEZ.
+            Finalidad: Mantenimiento de la relación y envío de información comercial. Legitimación: Relación
+            contractual e interés legítimo. Destinatarios: No se cederán datos a terceros salvo obligación legal.
+            Derechos: Puede ejercer sus derechos de acceso, rectificación, supresión y portabilidad de sus datos,
+            y la limitación u oposición al tratamiento mediante escrito acompañado de copia de documento
+            oficial que le identifique, dirigido al Responsable del tratamiento. En caso de disconformidad con el
+            tratamiento, también tiene derecho a presentar una reclamación ante la Agencia Española de
+            Protección de Datos.
+          </p>
         </div>
       </div>
     `;

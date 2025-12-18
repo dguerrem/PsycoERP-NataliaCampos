@@ -20,6 +20,7 @@ export class ReusableModalComponent {
   @Input() cancelButtonText: string | null = null; // New input for cancel session button
   @Input() deleteButtonText: string | null = null; // New input for delete session button
   @Input() isCancelled: boolean = false; // New input to show cancelled status
+  @Input() modalSize: 'small' | 'medium' | 'large' = 'large'; // Modal size control
 
   @Output() onSubmit = new EventEmitter<void>();
   @Output() onCancel = new EventEmitter<void>();

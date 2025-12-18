@@ -31,6 +31,24 @@ export interface SessionDetail {
   session_id: number;
   session_date: string;
   price: number;
+  payment_method?: string;
+}
+
+/**
+ * Datos de un progenitor
+ */
+export interface ProgenitorData {
+  full_name: string | null;
+  dni: string | null;
+  phone: string | null;
+}
+
+/**
+ * Datos de progenitores para pacientes menores
+ */
+export interface ProgenitorsData {
+  progenitor1: ProgenitorData;
+  progenitor2: ProgenitorData;
 }
 
 export interface PendingInvoice {
@@ -44,6 +62,7 @@ export interface PendingInvoice {
   sessions: SessionDetail[];
   pending_sessions_count: number;
   total_gross: number;
+  progenitors_data?: ProgenitorsData;
 }
 
 export interface PendingInvoicesResponse {
@@ -68,6 +87,7 @@ export interface ExistingInvoice {
   sessions_count: number;
   total: number;
   concept: string;
+  progenitors_data?: ProgenitorsData;
 }
 
 export interface ExistingInvoicesResponse {

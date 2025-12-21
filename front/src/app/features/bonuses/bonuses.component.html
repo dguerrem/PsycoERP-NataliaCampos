@@ -161,19 +161,12 @@
   (onCancel)="closeCreateModal()">
 
   <form [formGroup]="bonusForm" class="space-y-4 p-4 sm:p-6">
-    <!-- Patient Selector or Info (full width) -->
-    @if (selectedPatient()) {
-    <div class="p-3 bg-gray-50 rounded-md">
-      <p class="text-xs text-gray-500 mb-1">Paciente</p>
-      <p class="font-medium text-sm">{{ selectedPatient()?.nombreCompleto }}</p>
-    </div>
-    } @else {
+    <!-- Patient Selector -->
     <div>
       <app-patient-selector [control]="$any(bonusForm.get('patientId'))" [patients]="patients()"
         [label]="'Paciente'" [placeholder]="'Seleccionar paciente...'" [required]="true">
       </app-patient-selector>
     </div>
-    }
 
     <!-- Row 1: Número de Sesiones | Precio por Sesión -->
     <div class="grid grid-cols-2 gap-4">

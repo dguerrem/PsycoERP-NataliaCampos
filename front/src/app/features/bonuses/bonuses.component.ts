@@ -209,8 +209,6 @@ export class BonusesComponent implements OnInit {
 
   // Actions
   openCreateModal(): void {
-    const patient = this.selectedPatient();
-
     this.isCreatingBonus.set(true);
 
     // Calculate default expiry date (10 weeks from now)
@@ -219,7 +217,7 @@ export class BonusesComponent implements OnInit {
     const defaultExpiryString = defaultExpiryDate.toISOString().split('T')[0];
 
     this.bonusForm.reset({
-      patientId: patient ? patient.idPaciente : null,
+      patientId: null,
       totalSessions: 10,
       pricePerSession: 50,
       totalPrice: 500,

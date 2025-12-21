@@ -17,7 +17,8 @@ export interface CreateSessionRequest {
     | 'transferencia'
     | 'tarjeta'
     | 'efectivo'
-    | 'pendiente';
+    | 'pendiente'
+    | 'bono';
   notes: string;
 }
 
@@ -36,7 +37,8 @@ export interface SessionData {
       | 'transferencia'
       | 'tarjeta'
       | 'efectivo'
-      | 'pendiente';
+      | 'pendiente'
+      | 'bono';
     status: 'completada' | 'cancelada'; // Added unified status field
     completed: boolean; // true/false
     cancelled: boolean; // true/false - to handle cancelled sessions
@@ -120,6 +122,7 @@ export class SessionUtils {
       transferencia: 'Transferencia',
       bizum: 'Bizum',
       pendiente: 'Pendiente',
+      bono: 'Bono',
     };
     return methods[method as keyof typeof methods] || method;
   }

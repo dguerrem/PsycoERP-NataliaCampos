@@ -146,6 +146,9 @@ export class NewSessionFormComponent implements OnInit {
   /** Bonus state */
   hasActiveBonus = signal(false);
 
+  /** Flag to indicate if session was originally paid with bonus */
+  sessionPaidWithBonus = signal(false);
+
   /** Computed filtered notes */
   filteredNotes = computed(() => {
     const notesArray = this.notes();
@@ -213,10 +216,11 @@ export class NewSessionFormComponent implements OnInit {
     { value: 'efectivo', label: 'Efectivo' },
   ];
 
-  /** Computed payment method options (includes 'bono' if patient has active bonus) */
+  /** Computed payment method options (includes 'bono' if patient has active bonus OR session was paid with bonus) */
   paymentMethodOptions = computed(() => {
     const baseOptions = [...this.basePaymentMethodOptions];
-    if (this.hasActiveBonus()) {
+    // Show 'Bono' option if patient has active bonus OR if session was originally paid with bonus
+    if (this.hasActiveBonus() || this.sessionPaidWithBonus()) {
       baseOptions.push({ value: 'bono', label: 'Bono' });
     }
     return baseOptions;
@@ -379,6 +383,11 @@ export class NewSessionFormComponent implements OnInit {
     const defaultDate =
       this.prefilledData?.date || new Date().toISOString().split('T')[0];
     const defaultStartTime = this.prefilledData?.startTime || '';
+
+    // Check if session was originally paid with bonus (for historical consistency)
+    if (isEditMode && sessionData!.SessionDetailData.payment_method === 'bono') {
+      this.sessionPaidWithBonus.set(true);
+    }
 
     const formValues = isEditMode
       ? {
@@ -794,22 +803,15 @@ export class NewSessionFormComponent implements OnInit {
       notes: formValue.notes || null,
     };
 
-    const isBonusPayment = formValue.payment_method === 'bono';
-
     if (this.isEditMode && this.sessionId) {
       // Update existing session
       this.sessionsService
         .updateSession(this.sessionId, sessionData)
         .subscribe({
           next: (updatedSession) => {
-            // If payment method is 'bono', redeem the bonus
-            if (isBonusPayment && formValue.patient_id) {
-              this.redeemBonusAfterSave(formValue.patient_id, this.sessionId!, updatedSession);
-            } else {
-              this.sessionDataCreated.emit(updatedSession);
-              this.isLoading.set(false);
-              this.onClose();
-            }
+            this.sessionDataCreated.emit(updatedSession);
+            this.isLoading.set(false);
+            this.onClose();
           },
           error: (error) => {
             console.error('Error updating session:', error);
@@ -838,28 +840,6 @@ export class NewSessionFormComponent implements OnInit {
         },
       });
     }
-  }
-
-  /**
-   * Redeem bonus after session is successfully saved
-   */
-  private redeemBonusAfterSave(patientId: number, sessionId: number, updatedSession: SessionData): void {
-    this.bonusesService.redeemBonus(patientId, sessionId).subscribe({
-      next: () => {
-        this.toastService.showSuccess('Sesión guardada y bono canjeado correctamente');
-        this.sessionDataCreated.emit(updatedSession);
-        this.isLoading.set(false);
-        this.onClose();
-      },
-      error: (error) => {
-        console.error('Error redeeming bonus:', error);
-        // Session was saved but bonus redemption failed - still close but show warning
-        this.toastService.showError('Sesión guardada pero hubo un error al canjear el bono');
-        this.sessionDataCreated.emit(updatedSession);
-        this.isLoading.set(false);
-        this.onClose();
-      },
-    });
   }
 
   get isFormValid(): boolean {

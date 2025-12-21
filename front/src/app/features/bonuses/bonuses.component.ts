@@ -349,16 +349,18 @@ export class BonusesComponent implements OnInit {
 
   /**
    * Verifica si un bono puede ser eliminado
-   * Condiciones: sesiones usadas = 0 O fecha de expiración > fecha actual
+   * Condiciones: sesiones usadas = 0 Y fecha de expiración > fecha actual
+   * Ambas condiciones deben cumplirse para poder eliminar
    */
   canDeleteBonus(bonus: Bonus): boolean {
-    if (bonus.used_sessions === 0) {
-      return true;
-    }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expirationDate = new Date(bonus.expiration_date);
     expirationDate.setHours(0, 0, 0, 0);
-    return expirationDate > today;
+
+    const hasNoUsedSessions = bonus.used_sessions === 0;
+    const isNotExpired = expirationDate > today;
+
+    return hasNoUsedSessions && isNotExpired;
   }
 }

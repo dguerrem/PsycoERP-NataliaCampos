@@ -247,6 +247,9 @@ const redimirBono = async (req, res) => {
             });
         }
 
+        // Todo: Validar que la sesión no haya sido ya redimida con otro bono (si es necesario)
+        
+
         // Redimir el uso del bono
         const bonusActualizado = await redeemBonusUsage(req.db, session_id, activeBonus.id);
 

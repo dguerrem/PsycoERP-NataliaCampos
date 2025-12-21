@@ -8,8 +8,8 @@ const getBonuses = async (db, filters = {}) => {
     // Query base para contar registros totales
     let countQuery = `
     SELECT COUNT(*) as total
-    FROM bonuses
-    WHERE is_active = true
+    FROM bonuses b
+    WHERE b.is_active = true
   `;
 
     // Query principal para obtener datos

@@ -25,6 +25,7 @@ import {
 } from '../../../../shared/models/session.model';
 import { PatientSelector } from '../../../../shared/models/patient.model';
 import { SessionsService } from '../../services/sessions.service';
+import { BonusesService } from '../../../bonuses/services/bonuses.service';
 import { ReusableModalComponent } from '../../../../shared/components/reusable-modal/reusable-modal.component';
 import { FormInputComponent } from '../../../../shared/components/form-input/form-input.component';
 import { PatientSelectorComponent } from '../../../../shared/components/patient-selector/patient-selector.component';
@@ -78,6 +79,7 @@ export class NewSessionFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private sessionsService = inject(SessionsService);
+  private bonusesService = inject(BonusesService);
   private clinicalNotesService = inject(ClinicalNotesService);
   private toastService = inject(ToastService);
   private router = inject(Router);
@@ -141,6 +143,9 @@ export class NewSessionFormComponent implements OnInit {
   isRecording = signal(false);
   private recognition: any = null;
 
+  /** Bonus state */
+  hasActiveBonus = signal(false);
+
   /** Computed filtered notes */
   filteredNotes = computed(() => {
     const notesArray = this.notes();
@@ -200,13 +205,22 @@ export class NewSessionFormComponent implements OnInit {
     { value: 'online', label: 'Online' },
   ];
 
-  readonly paymentMethodOptions = [
+  private readonly basePaymentMethodOptions = [
     { value: 'pendiente', label: 'Pendiente' },
     { value: 'bizum', label: 'Bizum' },
     { value: 'transferencia', label: 'Transferencia' },
     { value: 'tarjeta', label: 'Tarjeta' },
     { value: 'efectivo', label: 'Efectivo' },
   ];
+
+  /** Computed payment method options (includes 'bono' if patient has active bonus) */
+  paymentMethodOptions = computed(() => {
+    const baseOptions = [...this.basePaymentMethodOptions];
+    if (this.hasActiveBonus()) {
+      baseOptions.push({ value: 'bono', label: 'Bono' });
+    }
+    return baseOptions;
+  });
 
   /** Reactive form for session data */
   sessionForm!: FormGroup;
@@ -477,8 +491,58 @@ export class NewSessionFormComponent implements OnInit {
       }
     });
 
+    // Watch for payment_method changes to handle 'bono' selection
+    this.sessionForm.get('payment_method')?.valueChanges.subscribe((paymentMethod) => {
+      this.handlePaymentMethodChange(paymentMethod);
+    });
+
     // Initialize basePrice signal with current form value
     this.basePrice.set(this.sessionForm.get('base_price')?.value || 0);
+  }
+
+  /** Store original price before switching to 'bono' */
+  private originalPrice: number | null = null;
+
+  /**
+   * Handle payment method changes - when 'bono' is selected, set price to 0 and disable
+   */
+  private handlePaymentMethodChange(paymentMethod: string): void {
+    const basePriceControl = this.sessionForm.get('base_price');
+    if (!basePriceControl) return;
+
+    if (paymentMethod === 'bono') {
+      // Store current price before changing to 0
+      if (this.originalPrice === null) {
+        this.originalPrice = basePriceControl.value;
+      }
+      // Set price to 0 and disable the field
+      basePriceControl.setValue(0, { emitEvent: false });
+      basePriceControl.disable();
+      this.basePrice.set(0);
+      this.netPrice.set(0);
+      // Remove min validation for bono
+      basePriceControl.clearValidators();
+      basePriceControl.setValidators([Validators.required, Validators.min(0)]);
+      basePriceControl.updateValueAndValidity();
+    } else {
+      // Restore original price and enable the field
+      basePriceControl.enable();
+      if (this.originalPrice !== null) {
+        basePriceControl.setValue(this.originalPrice, { emitEvent: false });
+        this.basePrice.set(this.originalPrice);
+        // Recalculate net price
+        const patient = this.selectedPatient();
+        if (patient && this.originalPrice > 0) {
+          const calculatedNetPrice = this.originalPrice * (patient.porcentaje / 100);
+          this.netPrice.set(calculatedNetPrice);
+        }
+        this.originalPrice = null;
+      }
+      // Restore min validation
+      basePriceControl.clearValidators();
+      basePriceControl.setValidators([Validators.required, Validators.min(0.01)]);
+      basePriceControl.updateValueAndValidity();
+    }
   }
 
   private loadPatients(): void {
@@ -512,6 +576,11 @@ export class NewSessionFormComponent implements OnInit {
               // Update basePrice and netPrice signals from backend
               this.basePrice.set(sessionData.SessionDetailData.price);
               this.netPrice.set(sessionData.SessionDetailData.net_price);
+
+              // Check if patient has active bonus
+              if (patientId !== null) {
+                this.checkPatientActiveBonus(patientId);
+              }
             }
           }
         },
@@ -519,6 +588,21 @@ export class NewSessionFormComponent implements OnInit {
           console.error('Error loading patients:', error);
         },
       });
+  }
+
+  /**
+   * Check if patient has an active bonus
+   */
+  private checkPatientActiveBonus(patientId: number): void {
+    this.bonusesService.checkActiveBonus(patientId).subscribe({
+      next: (response) => {
+        this.hasActiveBonus.set(response.has_active_bonus);
+      },
+      error: (error) => {
+        console.error('Error checking active bonus:', error);
+        this.hasActiveBonus.set(false);
+      },
+    });
   }
 
   onClose(): void {
@@ -655,6 +739,7 @@ export class NewSessionFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    debugger
     this.error.set(null);
 
     // Prevent double submission
@@ -709,15 +794,22 @@ export class NewSessionFormComponent implements OnInit {
       notes: formValue.notes || null,
     };
 
+    const isBonusPayment = formValue.payment_method === 'bono';
+
     if (this.isEditMode && this.sessionId) {
       // Update existing session
       this.sessionsService
         .updateSession(this.sessionId, sessionData)
         .subscribe({
           next: (updatedSession) => {
-            this.sessionDataCreated.emit(updatedSession);
-            this.isLoading.set(false);
-            this.onClose();
+            // If payment method is 'bono', redeem the bonus
+            if (isBonusPayment && formValue.patient_id) {
+              this.redeemBonusAfterSave(formValue.patient_id, this.sessionId!, updatedSession);
+            } else {
+              this.sessionDataCreated.emit(updatedSession);
+              this.isLoading.set(false);
+              this.onClose();
+            }
           },
           error: (error) => {
             console.error('Error updating session:', error);
@@ -746,6 +838,28 @@ export class NewSessionFormComponent implements OnInit {
         },
       });
     }
+  }
+
+  /**
+   * Redeem bonus after session is successfully saved
+   */
+  private redeemBonusAfterSave(patientId: number, sessionId: number, updatedSession: SessionData): void {
+    this.bonusesService.redeemBonus(patientId, sessionId).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Sesión guardada y bono canjeado correctamente');
+        this.sessionDataCreated.emit(updatedSession);
+        this.isLoading.set(false);
+        this.onClose();
+      },
+      error: (error) => {
+        console.error('Error redeeming bonus:', error);
+        // Session was saved but bonus redemption failed - still close but show warning
+        this.toastService.showError('Sesión guardada pero hubo un error al canjear el bono');
+        this.sessionDataCreated.emit(updatedSession);
+        this.isLoading.set(false);
+        this.onClose();
+      },
+    });
   }
 
   get isFormValid(): boolean {

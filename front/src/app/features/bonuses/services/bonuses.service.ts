@@ -93,4 +93,28 @@ export class BonusesService {
         finalize(() => this.loadingService.hide())
       );
   }
+
+  /**
+   * Verificar si un paciente tiene bonos activos
+   * @param patientId ID del paciente
+   * @returns Observable con el estado del bono activo
+   */
+  checkActiveBonus(patientId: number): Observable<{ success: boolean; has_active_bonus: boolean }> {
+    return this.http.get<{ success: boolean; has_active_bonus: boolean }>(
+      `${this.apiUrl}/check-active/${patientId}`
+    );
+  }
+
+  /**
+   * Redimir una sesión del bono del paciente
+   * @param patientId ID del paciente
+   * @param sessionId ID de la sesión
+   * @returns Observable con la respuesta de redención
+   */
+  redeemBonus(patientId: number, sessionId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/redeem`, {
+      patient_id: patientId,
+      session_id: sessionId
+    });
+  }
 }

@@ -52,7 +52,7 @@ export interface ProgenitorsData {
 }
 
 export interface PendingInvoice {
-  patient_id: number;
+  patient_id: number | null; // Puede ser null en llamadas (personas no registradas)
   patient_full_name: string;
   dni: string;
   email: string;
@@ -63,6 +63,8 @@ export interface PendingInvoice {
   pending_sessions_count: number;
   total_gross: number;
   progenitors_data?: ProgenitorsData;
+  /** Tipo de factura: 'session' para sesiones, 'call' para llamadas */
+  invoice_type?: 'session' | 'call';
 }
 
 export interface PendingInvoicesResponse {
@@ -71,13 +73,15 @@ export interface PendingInvoicesResponse {
     year: number;
   };
   pending_invoices: PendingInvoice[];
+  /** Llamadas pendientes de facturar (misma estructura que pending_invoices) */
+  pending_calls: PendingInvoice[];
 }
 
 export interface ExistingInvoice {
   id: number;
   invoice_number: string;
   invoice_date: string;
-  patient_id: number;
+  patient_id: number | null; // Puede ser null en facturas de llamadas
   patient_full_name: string;
   dni: string;
   email: string;
@@ -88,6 +92,8 @@ export interface ExistingInvoice {
   total: number;
   concept: string;
   progenitors_data?: ProgenitorsData;
+  /** Tipo de factura: 'session' para sesiones, 'call' para llamadas */
+  invoice_type?: 'session' | 'call';
 }
 
 export interface ExistingInvoicesResponse {
@@ -97,6 +103,10 @@ export interface ExistingInvoicesResponse {
   };
   total_invoices: number;
   invoices: ExistingInvoice[];
+  /** Número total de facturas de llamadas */
+  total_call_invoices: number;
+  /** Facturas de llamadas ya generadas */
+  call_invoices: ExistingInvoice[];
 }
 
 export interface ApiResponse<T> {
@@ -109,7 +119,7 @@ export interface ApiResponse<T> {
 export interface CreateInvoiceRequest {
   invoice_number: string;
   invoice_date: string;
-  patient_id: number;
+  patient_id: number | null; // Puede ser null para llamadas de personas no registradas
   session_ids: number[];
   concept: string;
 }

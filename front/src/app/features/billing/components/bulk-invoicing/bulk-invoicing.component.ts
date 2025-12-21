@@ -247,11 +247,11 @@ export class BulkInvoicingComponent {
     const emailFilter = this.pendingEmailFilter().toLowerCase();
 
     return invoices.filter((invoice) => {
-      const matchesPatient = invoice.patient_full_name
+      const matchesPatient = (invoice.patient_full_name || '')
         .toLowerCase()
         .includes(patientFilter);
-      const matchesDni = invoice.dni.toLowerCase().includes(dniFilter);
-      const matchesEmail = invoice.email.toLowerCase().includes(emailFilter);
+      const matchesDni = (invoice.dni || '').toLowerCase().includes(dniFilter);
+      const matchesEmail = (invoice.email || '').toLowerCase().includes(emailFilter);
 
       return matchesPatient && matchesDni && matchesEmail;
     });

@@ -128,7 +128,7 @@
     <!-- Tabla de pacientes -->
     <div class="flex-1 min-h-0">
       <div class="mb-4">
-        <h3 class="text-lg font-semibold mb-2">Pacientes con Sesiones - {{ getPendingMonthName() }} {{ pendingYear }}
+        <h3 class="text-lg font-semibold mb-2">Pacientes con Sesiones o Llamadas - {{ getPendingMonthName() }} {{ pendingYear }}
         </h3>
         <p class="text-sm text-muted-foreground">Selecciona los pacientes para generar facturas masivamente
         </p>
@@ -163,7 +163,7 @@
                     Email</th>
                   <th data-slot="table-head"
                     class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap min-w-[100px]">
-                    Sesiones</th>
+                    Cantidad</th>
                   <th data-slot="table-head"
                     class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap min-w-[80px]">
                     Total</th>
@@ -201,7 +201,7 @@
                 </tr>
               </thead>
               <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">
-                @for (invoice of filteredPendingInvoices(); track invoice.dni) {
+                @for (invoice of filteredPendingInvoices(); track invoice.dni + '-' + invoice.invoice_type) {
                 <tr data-slot="table-row" class="hover:bg-muted/50 border-b transition-colors">
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
                     <input type="checkbox" [checked]="selectedPatients.includes(invoice.dni)"
@@ -217,8 +217,7 @@
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
                     <span data-slot="badge"
                       class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap text-foreground">
-                      {{ invoice.pending_sessions_count }} {{ invoice.pending_sessions_count === 1 ?
-                      'sesiones' : 'sesiones' }}
+                      {{ invoice.pending_sessions_count }} {{ invoice.invoice_type === 'call' ? (invoice.pending_sessions_count === 1 ? 'llamada' : 'llamadas') : (invoice.pending_sessions_count === 1 ? 'sesión' : 'sesiones') }}
                     </span>
                   </td>
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap font-semibold">{{
@@ -249,7 +248,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <p class="font-medium">No hay pacientes con sesiones pendientes de facturar</p>
+                      <p class="font-medium">No hay pacientes con sesiones o llamadas pendientes de facturar</p>
                     </div>
                   </td>
                 </tr>

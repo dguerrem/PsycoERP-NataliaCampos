@@ -120,16 +120,16 @@ export class ExistingInvoicesComponent {
     const dniFilter = this.existingDniFilter().toLowerCase();
 
     return invoices.filter((invoice) => {
-      const matchesInvoiceNumber = invoice.invoice_number
+      const matchesInvoiceNumber = (invoice.invoice_number || '')
         .toLowerCase()
         .includes(invoiceNumberFilter);
-      const matchesDate = invoice.invoice_date
+      const matchesDate = (invoice.invoice_date || '')
         .toLowerCase()
         .includes(dateFilter);
-      const matchesPatient = invoice.patient_full_name
+      const matchesPatient = (invoice.patient_full_name || '')
         .toLowerCase()
         .includes(patientFilter);
-      const matchesDni = invoice.dni.toLowerCase().includes(dniFilter);
+      const matchesDni = (invoice.dni || '').toLowerCase().includes(dniFilter);
 
       return (
         matchesInvoiceNumber && matchesDate && matchesPatient && matchesDni

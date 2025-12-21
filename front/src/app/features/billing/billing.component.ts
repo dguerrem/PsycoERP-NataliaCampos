@@ -216,11 +216,11 @@ export class BillingComponent implements OnInit {
     const emailFilter = this.pendingEmailFilter().toLowerCase();
 
     return invoices.filter((invoice) => {
-      const matchesPatient = invoice.patient_full_name
+      const matchesPatient = (invoice.patient_full_name || '')
         .toLowerCase()
         .includes(patientFilter);
-      const matchesDni = invoice.dni.toLowerCase().includes(dniFilter);
-      const matchesEmail = invoice.email.toLowerCase().includes(emailFilter);
+      const matchesDni = (invoice.dni || '').toLowerCase().includes(dniFilter);
+      const matchesEmail = (invoice.email || '').toLowerCase().includes(emailFilter);
 
       return matchesPatient && matchesDni && matchesEmail;
     });
@@ -236,16 +236,16 @@ export class BillingComponent implements OnInit {
     const dniFilter = this.existingDniFilter().toLowerCase();
 
     return invoices.filter((invoice) => {
-      const matchesInvoiceNumber = invoice.invoice_number
+      const matchesInvoiceNumber = (invoice.invoice_number || '')
         .toLowerCase()
         .includes(invoiceNumberFilter);
-      const matchesDate = invoice.invoice_date
+      const matchesDate = (invoice.invoice_date || '')
         .toLowerCase()
         .includes(dateFilter);
-      const matchesPatient = invoice.patient_full_name
+      const matchesPatient = (invoice.patient_full_name || '')
         .toLowerCase()
         .includes(patientFilter);
-      const matchesDni = invoice.dni.toLowerCase().includes(dniFilter);
+      const matchesDni = (invoice.dni || '').toLowerCase().includes(dniFilter);
 
       return (
         matchesInvoiceNumber && matchesDate && matchesPatient && matchesDni
@@ -292,7 +292,7 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Carga las facturas pendientes
+   * Carga las facturas pendientes (sesiones y llamadas)
    */
   loadPendingInvoices() {
     this.isLoadingPending.set(true);
@@ -300,7 +300,18 @@ export class BillingComponent implements OnInit {
       .getPendingInvoices(this.pendingMonth(), this.pendingYear())
       .subscribe({
         next: (response) => {
-          this.pendingInvoices.set(response.data.pending_invoices);
+          // Marcar las sesiones con su tipo
+          const sessions = (response.data.pending_invoices || []).map(inv => ({
+            ...inv,
+            invoice_type: 'session' as const
+          }));
+          // Marcar las llamadas con su tipo
+          const calls = (response.data.pending_calls || []).map(inv => ({
+            ...inv,
+            invoice_type: 'call' as const
+          }));
+          // Combinar ambos arrays
+          this.pendingInvoices.set([...sessions, ...calls]);
           this.isLoadingPending.set(false);
           // Limpiar selección al cambiar filtros
           this.selectedPatients.set([]);
@@ -312,7 +323,7 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Carga las facturas existentes
+   * Carga las facturas existentes (sesiones y llamadas)
    */
   loadExistingInvoices() {
     this.isLoadingExisting.set(true);
@@ -320,7 +331,18 @@ export class BillingComponent implements OnInit {
       .getExistingInvoices(this.existingMonth(), this.existingYear())
       .subscribe({
         next: (response) => {
-          this.existingInvoices.set(response.data.invoices);
+          // Marcar las facturas de sesiones con su tipo
+          const sessionInvoices = (response.data.invoices || []).map(inv => ({
+            ...inv,
+            invoice_type: 'session' as const
+          }));
+          // Marcar las facturas de llamadas con su tipo
+          const callInvoices = (response.data.call_invoices || []).map(inv => ({
+            ...inv,
+            invoice_type: 'call' as const
+          }));
+          // Combinar ambos arrays
+          this.existingInvoices.set([...sessionInvoices, ...callInvoices]);
           this.isLoadingExisting.set(false);
         },
         error: () => {
@@ -626,14 +648,18 @@ export class BillingComponent implements OnInit {
       const originalData = selectedInvoicesData[index];
       const monthName = this.monthNames[this.pendingMonth() - 1];
 
+      // Determinar el concepto basado en el tipo de factura
+      const isCall = originalData.invoice_type === 'call';
+      const concept = isCall
+        ? `Llamadas de consulta - ${monthName} ${this.pendingYear()}`
+        : `Sesiones de psicología - ${monthName} ${this.pendingYear()}`;
+
       return {
         invoice_number: invoice.invoice_number,
         invoice_date: invoice.invoice_date,
         patient_id: originalData.patient_id,
         session_ids: originalData.sessions.map((s) => s.session_id),
-        concept: `Sesiones ${
-          originalData.patient_full_name
-        } - ${monthName} ${this.pendingYear()}`,
+        concept,
       };
     });
 

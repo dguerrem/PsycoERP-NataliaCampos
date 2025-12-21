@@ -273,7 +273,8 @@ export class BillingService {
   private getEmptyPending(month: number, year: number): PendingInvoicesResponse {
     return {
       filters_applied: { month, year },
-      pending_invoices: []
+      pending_invoices: [],
+      pending_calls: []
     };
   }
 
@@ -281,7 +282,9 @@ export class BillingService {
     return {
       filters_applied: { month, year },
       total_invoices: 0,
-      invoices: []
+      invoices: [],
+      total_call_invoices: 0,
+      call_invoices: []
     };
   }
 }

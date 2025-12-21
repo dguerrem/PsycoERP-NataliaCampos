@@ -86,7 +86,7 @@
                     DNI</th>
                   <th data-slot="table-head"
                     class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap min-w-[100px]">
-                    Sesiones</th>
+                    Cantidad</th>
                   <th data-slot="table-head"
                     class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap min-w-[100px]">
                     Total</th>
@@ -144,8 +144,7 @@
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
                     <span data-slot="badge"
                       class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap text-foreground">
-                      {{ invoice.sessions_count }} {{ invoice.sessions_count === 1 ? 'sesión' : 'sesiones'
-                      }}
+                      {{ invoice.sessions_count }} {{ invoice.invoice_type === 'call' ? (invoice.sessions_count === 1 ? 'llamada' : 'llamadas') : (invoice.sessions_count === 1 ? 'sesión' : 'sesiones') }}
                     </span>
                   </td>
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap font-semibold">{{

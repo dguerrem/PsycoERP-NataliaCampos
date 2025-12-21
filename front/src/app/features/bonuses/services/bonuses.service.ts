@@ -73,7 +73,7 @@ export class BonusesService {
     this.loadingService.show();
 
     return this.http
-      .patch<BonusApiResponse>(`${this.apiUrl}/${bonusId}`, updateData)
+      .put<BonusApiResponse>(`${this.apiUrl}/${bonusId}`, updateData)
       .pipe(
         finalize(() => this.loadingService.hide())
       );

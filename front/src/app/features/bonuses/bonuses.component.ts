@@ -277,9 +277,10 @@ export class BonusesComponent implements OnInit {
 
   handleEditBonus(): void {
     const bonus = this.editingBonus();
-    if (this.bonusForm.valid && bonus) {
-      const expiryDate = this.bonusForm.get('expiryDate')?.value;
+    const expiryDate = this.bonusForm.get('expiryDate')?.value;
 
+    // For edit, we only need the expiryDate to be valid
+    if (bonus && expiryDate) {
       this.bonusesService.updateBonus(bonus.id, { expiration_date: expiryDate }).subscribe({
         next: (response) => {
           this.toastService.showSuccess('Fecha de expiración actualizada');

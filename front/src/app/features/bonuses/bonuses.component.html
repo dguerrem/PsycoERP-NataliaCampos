@@ -28,8 +28,7 @@
               <div>
                 <div class="font-semibold text-lg">{{ bonus.patient_name }}</div>
                 <p class="text-sm text-muted-foreground">
-                  Bono #{{ bonus.id }} • {{ bonus.sessions_number }} sesiones • {{ bonus.price_per_session }}€ por
-                  sesión
+                  {{ bonus.sessions_number }} sesiones • {{ bonus.price_per_session }}€ por sesión
                 </p>
               </div>
               <span
@@ -162,15 +161,13 @@
   (onCancel)="closeCreateModal()">
 
   <form [formGroup]="bonusForm" class="space-y-4 p-4 sm:p-6">
-    <!-- Patient Selector or Info -->
+    <!-- Patient Selector or Info (full width) -->
     @if (selectedPatient()) {
-    <!-- Patient Info (Read-only when filtered) -->
     <div class="p-3 bg-gray-50 rounded-md">
-      <p class="text-sm text-gray-600">Paciente:</p>
-      <p class="font-medium">{{ selectedPatient()?.nombreCompleto }}</p>
+      <p class="text-xs text-gray-500 mb-1">Paciente</p>
+      <p class="font-medium text-sm">{{ selectedPatient()?.nombreCompleto }}</p>
     </div>
     } @else {
-    <!-- Patient Selector (when viewing all bonuses) -->
     <div>
       <app-patient-selector [control]="$any(bonusForm.get('patientId'))" [patients]="patients()"
         [label]="'Paciente'" [placeholder]="'Seleccionar paciente...'" [required]="true">
@@ -178,43 +175,43 @@
     </div>
     }
 
-    <!-- Total Sessions -->
-    <div>
-      <label for="totalSessions" class="block text-sm font-medium text-gray-700 mb-1">
-        Número de Sesiones
-      </label>
-      <input id="totalSessions" type="number" formControlName="totalSessions"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-        min="1" />
+    <!-- Row 1: Número de Sesiones | Precio por Sesión -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="totalSessions" class="block text-xs text-gray-500 mb-1">
+          Número de Sesiones
+        </label>
+        <input id="totalSessions" type="number" formControlName="totalSessions"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          min="1" />
+      </div>
+      <div>
+        <label for="pricePerSession" class="block text-xs text-gray-500 mb-1">
+          Precio por Sesión (€)
+        </label>
+        <input id="pricePerSession" type="number" formControlName="pricePerSession"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          min="0" step="0.01" />
+      </div>
     </div>
 
-    <!-- Price Per Session -->
-    <div>
-      <label for="pricePerSession" class="block text-sm font-medium text-gray-700 mb-1">
-        Precio por Sesión (€)
-      </label>
-      <input id="pricePerSession" type="number" formControlName="pricePerSession"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-        min="0" step="0.01" />
-    </div>
-
-    <!-- Total Price -->
-    <div>
-      <label for="totalPrice" class="block text-sm font-medium text-gray-700 mb-1">
-        Precio Total (€)
-      </label>
-      <input id="totalPrice" type="number" formControlName="totalPrice"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-        min="0" step="0.01" />
-    </div>
-
-    <!-- Expiry Date -->
-    <div>
-      <label for="expiryDate" class="block text-sm font-medium text-gray-700 mb-1">
-        Fecha de Expiración
-      </label>
-      <input id="expiryDate" type="date" formControlName="expiryDate"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+    <!-- Row 2: Precio Total | Fecha de Expiración -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="totalPrice" class="block text-xs text-gray-500 mb-1">
+          Precio Total (€)
+        </label>
+        <input id="totalPrice" type="number" formControlName="totalPrice"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          min="0" step="0.01" />
+      </div>
+      <div>
+        <label for="expiryDate" class="block text-xs text-gray-500 mb-1">
+          Fecha de Expiración
+        </label>
+        <input id="expiryDate" type="date" formControlName="expiryDate"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+      </div>
     </div>
   </form>
 </app-reusable-modal>
@@ -224,7 +221,7 @@
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
   <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
     <div class="p-6">
-      <h3 class="text-lg font-semibold mb-4">Historial del Bono #{{ selectedBonusHistory()!.id }}</h3>
+      <h3 class="text-lg font-semibold mb-4">Historial del Bono</h3>
 
       <div class="space-y-4">
         <!-- Summary Cards -->
@@ -293,8 +290,8 @@
 <!-- Edit Bonus Modal -->
 <app-reusable-modal
   [isOpen]="!!editingBonus()"
-  [title]="'Editar Fecha de Expiración'"
-  [subtitle]="'Bono #' + (editingBonus()?.id || '')"
+  [title]="'Editar'"
+  [subtitle]="'Edite la fecha de expiración del bono'"
   [submitText]="'Guardar Cambios'"
   [isFormValid]="!!bonusForm.get('expiryDate')?.value"
   [actionType]="'edit'"
@@ -306,29 +303,34 @@
   <!-- Bonus Info (Read-only) -->
   @if (editingBonus()) {
   <div class="p-4 sm:p-6 space-y-4">
-    <div class="p-4 bg-gray-50 rounded-lg space-y-2">
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Paciente:</span>
-        <span class="font-medium">{{ editingBonus()!.patient_name }}</span>
+    <!-- Row 1: Paciente | Número de Sesiones -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Paciente</p>
+        <p class="font-medium text-sm">{{ editingBonus()!.patient_name }}</p>
       </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Bono:</span>
-        <span class="font-medium">#{{ editingBonus()!.id }}</span>
-      </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Sesiones:</span>
-        <span class="font-medium">{{ editingBonus()!.sessions_number }} sesiones</span>
-      </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-600">Precio total:</span>
-        <span class="font-medium">{{ editingBonus()!.total_price }}€</span>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Número de Sesiones</p>
+        <p class="font-medium text-sm">{{ editingBonus()!.sessions_number }} sesiones</p>
       </div>
     </div>
 
-    <form [formGroup]="bonusForm" class="space-y-4">
-      <!-- Expiry Date -->
+    <!-- Row 2: Precio por Sesión | Precio Total -->
+    <div class="grid grid-cols-2 gap-4">
       <div>
-        <label for="editExpiryDate" class="block text-sm font-medium text-gray-700 mb-1">
+        <p class="text-xs text-gray-500 mb-1">Precio por Sesión</p>
+        <p class="font-medium text-sm">{{ editingBonus()!.price_per_session }}€</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Precio Total</p>
+        <p class="font-medium text-sm">{{ editingBonus()!.total_price }}€</p>
+      </div>
+    </div>
+
+    <!-- Row 3: Fecha de Expiración (editable) -->
+    <form [formGroup]="bonusForm">
+      <div>
+        <label for="editExpiryDate" class="block text-xs text-gray-500 mb-1">
           Fecha de Expiración
         </label>
         <input id="editExpiryDate" type="date" formControlName="expiryDate"
@@ -352,7 +354,7 @@
       </div>
       <h3 class="text-lg font-semibold text-center mb-2">Eliminar Bono</h3>
       <p class="text-sm text-gray-600 text-center mb-4">
-        ¿Estás seguro de que deseas eliminar el bono #{{ deletingBonus()!.id }} de <strong>{{ deletingBonus()!.patient_name }}</strong>?
+        ¿Estás seguro de que deseas eliminar el bono de <strong>{{ deletingBonus()!.patient_name }}</strong>?
       </p>
       <p class="text-xs text-gray-500 text-center mb-6">
         Esta acción no se puede deshacer.

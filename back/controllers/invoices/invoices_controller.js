@@ -1,4 +1,4 @@
-const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, createInvoice, createInvoiceOfClinics, getIssuedInvoices, getIssuedInvoicesOfClinics, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
+const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, getPendingInvoicesOfBonuses, createInvoice, createInvoiceOfClinics, getIssuedInvoices, getIssuedInvoicesOfClinics, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
 const logger = require("../../utils/logger");
 
 // Obtener KPIs de facturación
@@ -239,8 +239,8 @@ const generarFactura = async (req, res) => {
       message: allSuccess
         ? `${results.length} factura(s) generada(s) exitosamente`
         : partialSuccess
-        ? `${results.length} factura(s) generada(s), ${failedInvoices.length} fallida(s)`
-        : `Todas las facturas fallaron`,
+          ? `${results.length} factura(s) generada(s), ${failedInvoices.length} fallida(s)`
+          : `Todas las facturas fallaron`,
       data: {
         successful: results,
         failed: failedInvoices,
@@ -457,10 +457,50 @@ const obtenerFacturasEmitidasClinicas = async (req, res) => {
   }
 };
 
+// Obtener bonos pendientes de facturar
+const obtenerFacturasPendientesBonos = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    // Validar parámetros si se envían
+    if (month && (isNaN(parseInt(month)) || parseInt(month) < 1 || parseInt(month) > 12)) {
+      return res.status(400).json({
+        success: false,
+        error: "El mes debe ser un número entre 1 y 12"
+      });
+    }
+
+    if (year && (isNaN(parseInt(year)) || parseInt(year) < 2000)) {
+      return res.status(400).json({
+        success: false,
+        error: "El año debe ser un número válido mayor a 2000"
+      });
+    }
+
+    const filters = {};
+    if (month) filters.month = parseInt(month);
+    if (year) filters.year = parseInt(year);
+
+    const pendingBonusesData = await getPendingInvoicesOfBonuses(req.db, filters);
+
+    res.json({
+      success: true,
+      data: pendingBonusesData
+    });
+  } catch (err) {
+    logger.error("Error al obtener facturas pendientes de bonos:", err.message);
+    res.status(500).json({
+      success: false,
+      error: "Error al obtener las facturas pendientes de bonos"
+    });
+  }
+};
+
 module.exports = {
   obtenerKPIsFacturacion,
   obtenerFacturasPendientes,
   obtenerFacturasPendientesClinicas,
+  obtenerFacturasPendientesBonos,
   generarFactura,
   generarFacturaClinica,
   obtenerFacturasEmitidas,

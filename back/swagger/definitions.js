@@ -2279,6 +2279,137 @@ const definitions = {
     },
   },
 
+  PendingInvoicesOfBonusesResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      data: {
+        type: "object",
+        properties: {
+          filters_applied: {
+            type: "object",
+            properties: {
+              month: {
+                type: "integer",
+                description: "Mes aplicado en el filtro",
+                example: 12,
+              },
+              year: {
+                type: "integer",
+                description: "Año aplicado en el filtro",
+                example: 2025,
+              },
+            },
+          },
+          pending_invoices: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                bonus_id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID del bono",
+                  example: 5,
+                },
+                patient_id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID del paciente",
+                  example: 7,
+                },
+                patient_full_name: {
+                  type: "string",
+                  description: "Nombre completo del paciente",
+                  example: "Cliente 5 Cliente 5",
+                },
+                dni: {
+                  type: "string",
+                  description: "DNI del paciente",
+                  example: "991999999H",
+                },
+                email: {
+                  type: "string",
+                  description: "Email del paciente",
+                  example: "prueba@gmail.com",
+                },
+                patient_address_line1: {
+                  type: "string",
+                  description: "Primera línea de dirección del paciente",
+                  example: "no tiene no tiene no tiene",
+                },
+                patient_address_line2: {
+                  type: "string",
+                  description: "Segunda línea de dirección del paciente",
+                  example: "no tiene 99999",
+                },
+                clinic_name: {
+                  type: "string",
+                  description: "Nombre de la clínica principal",
+                  example: "Psicoandante Online",
+                },
+                sessions_number: {
+                  type: "integer",
+                  description: "Número de sesiones incluidas en el bono",
+                  example: 10,
+                },
+                total_gross: {
+                  type: "number",
+                  format: "float",
+                  description: "Precio total del bono",
+                  example: 500.00,
+                },
+                progenitors_data: {
+                  type: "object",
+                  description: "Información de progenitores (solo si el paciente es menor de edad)",
+                  properties: {
+                    progenitor1: {
+                      type: "object",
+                      properties: {
+                        full_name: {
+                          type: "string",
+                          example: "Juan Pérez",
+                        },
+                        dni: {
+                          type: "string",
+                          example: "12345678A",
+                        },
+                        phone: {
+                          type: "string",
+                          example: "600123456",
+                        },
+                      },
+                    },
+                    progenitor2: {
+                      type: "object",
+                      properties: {
+                        full_name: {
+                          type: "string",
+                          example: "María García",
+                        },
+                        dni: {
+                          type: "string",
+                          example: "87654321B",
+                        },
+                        phone: {
+                          type: "string",
+                          example: "600654321",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
   IssuedInvoicesResponse: {
     type: "object",
     properties: {

@@ -871,10 +871,101 @@ const getIssuedInvoicesOfClinics = async (db, filters = {}) => {
   return invoices;
 };
 
+// Obtener bonos pendientes de facturar
+const getPendingInvoicesOfBonuses = async (db, filters = {}) => {
+  const { month, year } = filters;
+
+  // Por defecto usar mes y año actual si no se especifican
+  const currentDate = new Date();
+  const targetMonth = month || (currentDate.getMonth() + 1);
+  const targetYear = year || currentDate.getFullYear();
+
+  // Calcular rango de fechas para el período filtrado
+  const startDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`;
+  const endDate = targetMonth === 12
+    ? `${targetYear + 1}-01-01`
+    : `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
+
+  // Obtener bonos pendientes de facturar con información del paciente y clínica principal
+  const [pendingBonusesResult] = await db.execute(
+    `SELECT
+       b.id as bonus_id,
+       b.patient_id,
+       CONCAT(p.first_name, ' ', p.last_name) as patient_full_name,
+       p.dni,
+       p.email,
+       CONCAT_WS(' ', p.street, p.street_number, p.door) as patient_address_line1,
+       CONCAT_WS(' ', p.city, p.postal_code) as patient_address_line2,
+       c.name as clinic_name,
+       p.is_minor,
+       p.progenitor1_full_name,
+       p.progenitor1_dni,
+       p.progenitor1_phone,
+       p.progenitor2_full_name,
+       p.progenitor2_dni,
+       p.progenitor2_phone,
+       b.sessions_number,
+       b.total_price
+     FROM bonuses b
+     INNER JOIN patients p ON b.patient_id = p.id AND p.is_active = true
+     INNER JOIN users u ON u.is_active = true
+     INNER JOIN clinics c ON u.principal_clinic_id = c.id AND c.is_active = true
+     WHERE b.is_active = true
+       AND b.invoiced = 0
+       AND b.created_at >= ?
+       AND b.created_at < ?
+     ORDER BY patient_full_name ASC`,
+    [startDate, endDate]
+  );
+
+  // Mapear resultados
+  const pendingInvoices = pendingBonusesResult.map(row => {
+    const invoice = {
+      bonus_id: parseInt(row.bonus_id),
+      patient_id: parseInt(row.patient_id),
+      patient_full_name: row.patient_full_name,
+      dni: row.dni || '',
+      email: row.email || '',
+      patient_address_line1: row.patient_address_line1 || '',
+      patient_address_line2: row.patient_address_line2 || '',
+      clinic_name: row.clinic_name,
+      sessions_number: parseInt(row.sessions_number),
+      total_gross: parseFloat(row.total_price)
+    };
+
+    // Si el paciente es menor de edad, añadir información de progenitores
+    if (row.is_minor === 1) {
+      invoice.progenitors_data = {
+        progenitor1: {
+          full_name: row.progenitor1_full_name || null,
+          dni: row.progenitor1_dni || null,
+          phone: row.progenitor1_phone || null
+        },
+        progenitor2: {
+          full_name: row.progenitor2_full_name || null,
+          dni: row.progenitor2_dni || null,
+          phone: row.progenitor2_phone || null
+        }
+      };
+    }
+
+    return invoice;
+  });
+
+  return {
+    filters_applied: {
+      month: targetMonth,
+      year: targetYear
+    },
+    pending_invoices: pendingInvoices
+  };
+};
+
 module.exports = {
   getInvoicesKPIs,
   getPendingInvoices,
   getPendingInvoicesOfClinics,
+  getPendingInvoicesOfBonuses,
   createInvoice,
   createInvoiceOfClinics,
   getIssuedInvoices,

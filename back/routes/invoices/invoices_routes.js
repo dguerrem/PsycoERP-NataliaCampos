@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { obtenerKPIsFacturacion, obtenerFacturasPendientes, obtenerFacturasPendientesClinicas, generarFactura, generarFacturaClinica, obtenerFacturasEmitidas, obtenerFacturasEmitidasClinicas, obtenerUltimoNumeroFactura } = require("../../controllers/invoices/invoices_controller");
+const { obtenerKPIsFacturacion, obtenerFacturasPendientes, obtenerFacturasPendientesClinicas, obtenerFacturasPendientesBonos, generarFactura, generarFacturaClinica, obtenerFacturasEmitidas, obtenerFacturasEmitidasClinicas, obtenerUltimoNumeroFactura } = require("../../controllers/invoices/invoices_controller");
 
 // GET /api/invoices/kpis - Obtener KPIs de facturación
 router.get("/kpis", obtenerKPIsFacturacion);
@@ -11,6 +11,9 @@ router.get("/pending", obtenerFacturasPendientes);
 
 // GET /api/invoices/pending-of-clinics - Obtener facturas pendientes de clínicas
 router.get("/pending-of-clinics", obtenerFacturasPendientesClinicas);
+
+// GET /api/invoices/pending-of-bonuses - Obtener bonos pendientes de facturar
+router.get("/pending-of-bonuses", obtenerFacturasPendientesBonos);
 
 // GET /api/invoices/last-number - Obtener último número de factura del año
 router.get("/last-number", obtenerUltimoNumeroFactura);

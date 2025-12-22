@@ -7,6 +7,12 @@ const getInvoicesKPIs = async (db, filters = {}) => {
   const targetMonth = month || (currentDate.getMonth() + 1);
   const targetYear = year || currentDate.getFullYear();
 
+  // Calcular rango de fechas para el período filtrado (más eficiente que MONTH/YEAR)
+  const startDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`;
+  const endDate = targetMonth === 12
+    ? `${targetYear + 1}-01-01`
+    : `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
+
   // ============================================
   // CARD 1: Total de facturas emitidas (histórico)
   // ============================================
@@ -38,61 +44,39 @@ const getInvoicesKPIs = async (db, filters = {}) => {
   const totalGrossHistoric = sessionsGrossHistoric + bonusesGrossHistoric;
 
   // ============================================
-  // CARD 3: Total facturado bruto (filtrado por mes/año)
-  // Incluye sesiones + bonos vendidos en el período
+  // CARD 3 y CARD 4: Consulta combinada para sesiones filtradas
+  // Incluye total bruto y neto en una sola query (más eficiente)
   // ============================================
-  const [totalGrossFilteredResult] = await db.execute(
-    `SELECT COALESCE(SUM(s.price), 0) as total_gross_filtered
+  const [sessionsFilteredResult] = await db.execute(
+    `SELECT 
+       COALESCE(SUM(s.price), 0) as total_gross_filtered,
+       COALESCE(SUM(s.price * (c.percentage / 100)), 0) as total_net_filtered
      FROM sessions s
      INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
      WHERE s.is_active = true
-       AND MONTH(s.session_date) = ?
-       AND YEAR(s.session_date) = ?`,
-    [targetMonth, targetYear]
+       AND s.session_date >= ?
+       AND s.session_date < ?`,
+    [startDate, endDate]
   );
-  const sessionsGrossFiltered = parseFloat(totalGrossFilteredResult[0].total_gross_filtered) || 0;
+  const sessionsGrossFiltered = parseFloat(sessionsFilteredResult[0].total_gross_filtered) || 0;
+  const sessionsNetFiltered = parseFloat(sessionsFilteredResult[0].total_net_filtered) || 0;
 
-  // Sumar bonos vendidos en el período filtrado
+  // Consulta combinada para bonos filtrados (total y count)
   const [bonusesFilteredResult] = await db.execute(
-    `SELECT COALESCE(SUM(total_price), 0) as total_bonuses_filtered
+    `SELECT 
+       COALESCE(SUM(total_price), 0) as total_bonuses_filtered,
+       COUNT(*) as total_bonuses_count
      FROM bonuses
      WHERE is_active = true
-       AND MONTH(created_at) = ?
-       AND YEAR(created_at) = ?`,
-    [targetMonth, targetYear]
+       AND created_at >= ?
+       AND created_at < ?`,
+    [startDate, endDate]
   );
   const bonusesGrossFiltered = parseFloat(bonusesFilteredResult[0].total_bonuses_filtered) || 0;
+  const bonusesCountFiltered = parseInt(bonusesFilteredResult[0].total_bonuses_count) || 0;
 
   const totalGrossFiltered = sessionsGrossFiltered + bonusesGrossFiltered;
-
-  // ============================================
-  // CARD 4: Total facturado NETO (filtrado por mes/año)
-  // Calculado con: sessions.price * (clinics.percentage / 100) + bonos (100% neto)
-  // ============================================
-  const [totalNetFilteredResult] = await db.execute(
-    `SELECT COALESCE(SUM(s.price * (c.percentage / 100)), 0) as total_net_filtered
-     FROM sessions s
-     INNER JOIN clinics c ON s.clinic_id = c.id AND c.is_active = true
-     WHERE s.is_active = true
-       AND MONTH(s.session_date) = ?
-       AND YEAR(s.session_date) = ?`,
-    [targetMonth, targetYear]
-  );
-  const sessionsNetFiltered = parseFloat(totalNetFilteredResult[0].total_net_filtered) || 0;
-
-  // Los bonos son 100% neto para la psicóloga (no hay comisión de clínica)
   const totalNetFiltered = sessionsNetFiltered + bonusesGrossFiltered;
-
-  // Obtener count de bonos en el período filtrado
-  const [bonusesCountResult] = await db.execute(
-    `SELECT COUNT(*) as total_bonuses
-     FROM bonuses
-     WHERE is_active = true
-       AND MONTH(created_at) = ?
-       AND YEAR(created_at) = ?`,
-    [targetMonth, targetYear]
-  );
-  const bonusesCountFiltered = parseInt(bonusesCountResult[0].total_bonuses) || 0;
 
   // ============================================
   // CARD 5: Total facturado NETO por clínica (filtrado por mes/año)
@@ -109,12 +93,12 @@ const getInvoicesKPIs = async (db, filters = {}) => {
      FROM clinics c
      LEFT JOIN sessions s ON s.clinic_id = c.id
        AND s.is_active = true
-       AND MONTH(s.session_date) = ?
-       AND YEAR(s.session_date) = ?
+       AND s.session_date >= ?
+       AND s.session_date < ?
      WHERE c.is_active = true
      GROUP BY c.id, c.name, c.percentage
      ORDER BY total_net DESC`,
-    [targetMonth, targetYear]
+    [startDate, endDate]
   );
 
   const totalNetByClinic = totalNetByClinicResult.map(row => {

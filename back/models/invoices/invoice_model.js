@@ -119,7 +119,7 @@ const getInvoicesKPIs = async (db, filters = {}) => {
     }
 
     return clinicData;
-  });
+  }).sort((a, b) => b.total_net - a.total_net); // Reordenar después de añadir bonos
 
   return {
     filters_applied: {

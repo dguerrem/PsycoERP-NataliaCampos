@@ -1,4 +1,4 @@
-const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, getPendingInvoicesOfBonuses, createInvoice, createInvoiceOfClinics, createInvoiceOfBonuses, getIssuedInvoices, getIssuedInvoicesOfClinics, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
+const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, getPendingInvoicesOfBonuses, createInvoice, createInvoiceOfClinics, createInvoiceOfBonuses, getIssuedInvoices, getIssuedInvoicesOfClinics, getIssuedInvoicesOfBonuses, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
 const logger = require("../../utils/logger");
 
 // Obtener KPIs de facturación
@@ -556,6 +556,45 @@ const generarFacturaBonos = async (req, res) => {
   }
 };
 
+// Obtener facturas emitidas de bonos
+const obtenerFacturasEmitidasBonos = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    // Validar parámetros si se envían
+    if (month && (isNaN(parseInt(month)) || parseInt(month) < 1 || parseInt(month) > 12)) {
+      return res.status(400).json({
+        success: false,
+        error: "El mes debe ser un número entre 1 y 12"
+      });
+    }
+
+    if (year && (isNaN(parseInt(year)) || parseInt(year) < 2000)) {
+      return res.status(400).json({
+        success: false,
+        error: "El año debe ser un número válido mayor a 2000"
+      });
+    }
+
+    const filters = {};
+    if (month) filters.month = parseInt(month);
+    if (year) filters.year = parseInt(year);
+
+    const invoicesData = await getIssuedInvoicesOfBonuses(req.db, filters);
+
+    res.json({
+      success: true,
+      data: invoicesData
+    });
+  } catch (err) {
+    logger.error("Error al obtener facturas emitidas de bonos:", err.message);
+    res.status(500).json({
+      success: false,
+      error: "Error al obtener las facturas emitidas de bonos"
+    });
+  }
+};
+
 module.exports = {
   obtenerKPIsFacturacion,
   obtenerFacturasPendientes,
@@ -566,5 +605,6 @@ module.exports = {
   generarFacturaBonos,
   obtenerFacturasEmitidas,
   obtenerFacturasEmitidasClinicas,
+  obtenerFacturasEmitidasBonos,
   obtenerUltimoNumeroFactura
 };

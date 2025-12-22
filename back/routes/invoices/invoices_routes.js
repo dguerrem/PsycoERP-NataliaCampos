@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { obtenerKPIsFacturacion, obtenerFacturasPendientes, obtenerFacturasPendientesClinicas, obtenerFacturasPendientesBonos, generarFactura, generarFacturaClinica, generarFacturaBonos, obtenerFacturasEmitidas, obtenerFacturasEmitidasClinicas, obtenerUltimoNumeroFactura } = require("../../controllers/invoices/invoices_controller");
+const { obtenerKPIsFacturacion, obtenerFacturasPendientes, obtenerFacturasPendientesClinicas, obtenerFacturasPendientesBonos, generarFactura, generarFacturaClinica, generarFacturaBonos, obtenerFacturasEmitidas, obtenerFacturasEmitidasClinicas, obtenerFacturasEmitidasBonos, obtenerUltimoNumeroFactura } = require("../../controllers/invoices/invoices_controller");
 
 // GET /api/invoices/kpis - Obtener KPIs de facturación
 router.get("/kpis", obtenerKPIsFacturacion);
@@ -32,5 +32,8 @@ router.post("/of-bonuses", generarFacturaBonos);
 
 // GET /api/invoices/of-clinics - Obtener facturas emitidas de clínicas
 router.get("/of-clinics", obtenerFacturasEmitidasClinicas);
+
+// GET /api/invoices/of-bonuses - Obtener facturas emitidas de bonos
+router.get("/of-bonuses", obtenerFacturasEmitidasBonos);
 
 module.exports = router;

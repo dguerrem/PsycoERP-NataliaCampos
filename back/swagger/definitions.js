@@ -2700,6 +2700,118 @@ const definitions = {
     },
   },
 
+  IssuedInvoicesOfBonusesResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      data: {
+        type: "object",
+        properties: {
+          filters_applied: {
+            type: "object",
+            properties: {
+              month: {
+                type: "integer",
+                description: "Mes aplicado en el filtro",
+                example: 12,
+              },
+              year: {
+                type: "integer",
+                description: "Año aplicado en el filtro",
+                example: 2025,
+              },
+            },
+          },
+          total_invoices: {
+            type: "integer",
+            description: "Número total de facturas de bonos encontradas",
+            example: 5,
+          },
+          invoices: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID de la factura",
+                  example: 50,
+                },
+                invoice_number: {
+                  type: "string",
+                  description: "Número de factura",
+                  example: "FAC-2025-010",
+                },
+                invoice_date: {
+                  type: "string",
+                  description: "Fecha de emisión (formato dd/mm/yyyy)",
+                  example: "15/12/2025",
+                },
+                bonus_id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID del bono facturado",
+                  example: 5,
+                },
+                patient_id: {
+                  type: "integer",
+                  format: "int64",
+                  description: "ID del paciente",
+                  example: 7,
+                },
+                patient_full_name: {
+                  type: "string",
+                  description: "Nombre completo del paciente",
+                  example: "Cliente 5 Cliente 5",
+                },
+                dni: {
+                  type: "string",
+                  description: "DNI del paciente",
+                  example: "991999999H",
+                },
+                email: {
+                  type: "string",
+                  description: "Email del paciente",
+                  example: "prueba@gmail.com",
+                },
+                patient_address_line1: {
+                  type: "string",
+                  description: "Primera línea de dirección del paciente",
+                  example: "Calle Ejemplo 123",
+                },
+                patient_address_line2: {
+                  type: "string",
+                  description: "Segunda línea de dirección del paciente",
+                  example: "Madrid 28001",
+                },
+                sessions_number: {
+                  type: "integer",
+                  description: "Número de sesiones incluidas en el bono",
+                  example: 10,
+                },
+                total: {
+                  type: "number",
+                  format: "float",
+                  description: "Total de la factura (precio del bono)",
+                  example: 500.00,
+                },
+                concept: {
+                  type: "string",
+                  description: "Concepto de la factura",
+                  example: "Venta de bono - Diciembre 2025",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
   IssuedInvoicesOfClinicsResponse: {
     type: "object",
     properties: {

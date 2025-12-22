@@ -1002,12 +1002,12 @@ const createInvoiceOfBonuses = async (db, invoiceData) => {
     const month = invoiceDateObj.getMonth() + 1;
     const year = invoiceDateObj.getFullYear();
 
-    // 2. Crear la factura (sin patient_id ni clinic_id)
+    // 2. Crear la factura con bonus_id
     const [invoiceResult] = await connection.execute(
       `INSERT INTO invoices
-       (invoice_number, invoice_date, concept, total, month, year)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [invoice_number, invoice_date, concept, total, month, year]
+       (invoice_number, invoice_date, bonus_id, concept, total, month, year)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [invoice_number, invoice_date, bonus_id, concept, total, month, year]
     );
 
     const invoice_id = invoiceResult.insertId;
@@ -1038,6 +1038,85 @@ const createInvoiceOfBonuses = async (db, invoiceData) => {
   }
 };
 
+// Obtener facturas emitidas de bonos con filtros
+const getIssuedInvoicesOfBonuses = async (db, filters = {}) => {
+  const { month, year } = filters;
+
+  // Por defecto usar mes y año actual si no se especifican
+  const currentDate = new Date();
+  const targetMonth = month || (currentDate.getMonth() + 1);
+  const targetYear = year || currentDate.getFullYear();
+
+  // Calcular rango de fechas para el período filtrado
+  const startDate = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`;
+  const endDate = targetMonth === 12
+    ? `${targetYear + 1}-01-01`
+    : `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
+
+  // Obtener facturas de bonos
+  const [invoicesResult] = await db.execute(
+    `SELECT
+       i.id,
+       i.invoice_number,
+       i.invoice_date,
+       i.bonus_id,
+       i.total,
+       i.concept,
+       i.month,
+       i.year,
+       i.created_at,
+       b.patient_id,
+       CONCAT(p.first_name, ' ', p.last_name) as patient_full_name,
+       p.dni,
+       p.email,
+       CONCAT_WS(' ', p.street, p.street_number, p.door) as patient_address_line1,
+       CONCAT_WS(' ', p.city, p.postal_code) as patient_address_line2,
+       b.sessions_number,
+       b.total_price as bonus_total_price
+     FROM invoices i
+     INNER JOIN bonuses b ON i.bonus_id = b.id AND b.is_active = true
+     INNER JOIN patients p ON b.patient_id = p.id AND p.is_active = true
+     WHERE i.is_active = true
+       AND i.bonus_id IS NOT NULL
+       AND i.invoice_date >= ?
+       AND i.invoice_date < ?
+     ORDER BY i.invoice_date DESC, i.invoice_number DESC`,
+    [startDate, endDate]
+  );
+
+  // Mapear resultados
+  const invoices = invoicesResult.map(row => {
+    // Formatear fecha a dd/mm/yyyy
+    const date = new Date(row.invoice_date);
+    const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+
+    return {
+      id: parseInt(row.id),
+      invoice_number: row.invoice_number,
+      invoice_date: formattedDate,
+      bonus_id: parseInt(row.bonus_id),
+      patient_id: parseInt(row.patient_id),
+      patient_full_name: row.patient_full_name,
+      dni: row.dni || '',
+      email: row.email || '',
+      patient_address_line1: row.patient_address_line1 || '',
+      patient_address_line2: row.patient_address_line2 || '',
+      sessions_number: parseInt(row.sessions_number),
+      total: parseFloat(row.total),
+      concept: row.concept || ''
+    };
+  });
+
+  return {
+    filters_applied: {
+      month: targetMonth,
+      year: targetYear
+    },
+    total_invoices: invoices.length,
+    invoices: invoices
+  };
+};
+
 module.exports = {
   getInvoicesKPIs,
   getPendingInvoices,
@@ -1048,5 +1127,6 @@ module.exports = {
   createInvoiceOfBonuses,
   getIssuedInvoices,
   getIssuedInvoicesOfClinics,
+  getIssuedInvoicesOfBonuses,
   getLastInvoiceNumber
 };

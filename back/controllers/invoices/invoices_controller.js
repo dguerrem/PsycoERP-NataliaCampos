@@ -1,4 +1,4 @@
-const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, getPendingInvoicesOfBonuses, createInvoice, createInvoiceOfClinics, getIssuedInvoices, getIssuedInvoicesOfClinics, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
+const { getInvoicesKPIs, getPendingInvoices, getPendingInvoicesOfClinics, getPendingInvoicesOfBonuses, createInvoice, createInvoiceOfClinics, createInvoiceOfBonuses, getIssuedInvoices, getIssuedInvoicesOfClinics, getLastInvoiceNumber } = require("../../models/invoices/invoice_model");
 const logger = require("../../utils/logger");
 
 // Obtener KPIs de facturación
@@ -496,6 +496,66 @@ const obtenerFacturasPendientesBonos = async (req, res) => {
   }
 };
 
+// Generar factura de bonos
+const generarFacturaBonos = async (req, res) => {
+  try {
+    const {
+      invoice_number,
+      invoice_date,
+      bonus_id,
+      concept
+    } = req.body;
+
+    // Validar campos obligatorios
+    if (!invoice_number || !invoice_date || !bonus_id || !concept) {
+      return res.status(400).json({
+        success: false,
+        error: "Faltan campos obligatorios: invoice_number, invoice_date, bonus_id, concept"
+      });
+    }
+
+    // Validar formato de fecha (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(invoice_date)) {
+      return res.status(400).json({
+        success: false,
+        error: "El formato de invoice_date debe ser YYYY-MM-DD"
+      });
+    }
+
+    // Validar que bonus_id sea un número
+    if (isNaN(parseInt(bonus_id))) {
+      return res.status(400).json({
+        success: false,
+        error: "bonus_id debe ser un número válido"
+      });
+    }
+
+    const invoiceData = {
+      invoice_number,
+      invoice_date,
+      bonus_id: parseInt(bonus_id),
+      concept
+    };
+
+    const result = await createInvoiceOfBonuses(req.db, invoiceData);
+
+    res.status(201).json({
+      success: true,
+      message: `Factura ${invoice_number} generada exitosamente para el bono`,
+      data: result
+    });
+  } catch (err) {
+    logger.error("Error al generar factura de bonos:", err.message);
+    res.status(500).json({
+      success: false,
+      error: err.message.includes('Duplicate entry') && err.message.includes('invoice_number')
+        ? "El número de factura ya existe"
+        : err.message || "Error al generar la factura de bonos"
+    });
+  }
+};
+
 module.exports = {
   obtenerKPIsFacturacion,
   obtenerFacturasPendientes,
@@ -503,6 +563,7 @@ module.exports = {
   obtenerFacturasPendientesBonos,
   generarFactura,
   generarFacturaClinica,
+  generarFacturaBonos,
   obtenerFacturasEmitidas,
   obtenerFacturasEmitidasClinicas,
   obtenerUltimoNumeroFactura

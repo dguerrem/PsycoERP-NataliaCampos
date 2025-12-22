@@ -961,6 +961,83 @@ const getPendingInvoicesOfBonuses = async (db, filters = {}) => {
   };
 };
 
+// Generar factura de bonos y marcar bono como facturado
+const createInvoiceOfBonuses = async (db, invoiceData) => {
+  const {
+    invoice_number,
+    invoice_date,
+    bonus_id,
+    concept
+  } = invoiceData;
+
+  // Validar que exista el bono
+  if (!bonus_id) {
+    throw new Error('Debe proporcionar el ID del bono para facturar');
+  }
+
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. Obtener información del bono a facturar
+    const [bonusesData] = await connection.execute(
+      `SELECT id, total_price, created_at
+       FROM bonuses
+       WHERE id = ?
+         AND is_active = true
+         AND invoiced = 0`,
+      [bonus_id]
+    );
+
+    if (bonusesData.length === 0) {
+      throw new Error('No se encontró un bono válido para facturar (ya facturado o inactivo)');
+    }
+
+    const bonus = bonusesData[0];
+    const total = parseFloat(bonus.total_price);
+
+    // Extraer mes y año de la fecha de factura
+    const invoiceDateObj = new Date(invoice_date);
+    const month = invoiceDateObj.getMonth() + 1;
+    const year = invoiceDateObj.getFullYear();
+
+    // 2. Crear la factura (sin patient_id ni clinic_id)
+    const [invoiceResult] = await connection.execute(
+      `INSERT INTO invoices
+       (invoice_number, invoice_date, concept, total, month, year)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [invoice_number, invoice_date, concept, total, month, year]
+    );
+
+    const invoice_id = invoiceResult.insertId;
+
+    // 3. Marcar bono como facturado
+    await connection.execute(
+      `UPDATE bonuses SET invoiced = 1 WHERE id = ?`,
+      [bonus_id]
+    );
+
+    await connection.commit();
+
+    // Retornar la factura creada
+    const [createdInvoice] = await connection.execute(
+      `SELECT * FROM invoices WHERE id = ?`,
+      [invoice_id]
+    );
+
+    return {
+      invoice: createdInvoice[0],
+      bonus_id: parseInt(bonus_id)
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
   getInvoicesKPIs,
   getPendingInvoices,
@@ -968,6 +1045,7 @@ module.exports = {
   getPendingInvoicesOfBonuses,
   createInvoice,
   createInvoiceOfClinics,
+  createInvoiceOfBonuses,
   getIssuedInvoices,
   getIssuedInvoicesOfClinics,
   getLastInvoiceNumber

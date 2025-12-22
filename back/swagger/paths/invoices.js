@@ -656,6 +656,131 @@ const invoicesPaths = {
       },
     },
   },
+  "/api/invoices/of-bonuses": {
+    post: {
+      tags: ["Invoices"],
+      summary: "Generar factura de bono",
+      description:
+        "Crea una factura para un solo bono. Valida que el bono exista y no esté ya facturado, lo marca como facturado (invoiced = 1). El total se toma del campo total_price del bono. Todo el proceso se ejecuta en una transacción.",
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["invoice_number", "invoice_date", "bonus_id", "concept"],
+              properties: {
+                invoice_number: {
+                  type: "string",
+                  description: "Número único de la factura (ej: FAC-2025-010)",
+                  example: "FAC-2025-010",
+                },
+                invoice_date: {
+                  type: "string",
+                  format: "date",
+                  description: "Fecha de emisión de la factura (YYYY-MM-DD)",
+                  example: "2025-01-15",
+                },
+                bonus_id: {
+                  type: "integer",
+                  description: "ID del bono a facturar",
+                  example: 5,
+                },
+                concept: {
+                  type: "string",
+                  description: "Concepto o descripción del servicio facturado",
+                  example: "Venta de bono - Enero 2025",
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: "Factura de bono generada exitosamente",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: {
+                    type: "boolean",
+                    example: true,
+                  },
+                  message: {
+                    type: "string",
+                    example: "Factura FAC-2025-010 generada exitosamente para el bono",
+                  },
+                  data: {
+                    type: "object",
+                    properties: {
+                      invoice: {
+                        type: "object",
+                        description: "Datos de la factura creada",
+                        properties: {
+                          id: {
+                            type: "integer",
+                            example: 50,
+                          },
+                          invoice_number: {
+                            type: "string",
+                            example: "FAC-2025-010",
+                          },
+                          concept: {
+                            type: "string",
+                            example: "Venta de bono - Enero 2025",
+                          },
+                          total: {
+                            type: "number",
+                            format: "float",
+                            example: 500.00,
+                          },
+                          month: {
+                            type: "integer",
+                            example: 1,
+                          },
+                          year: {
+                            type: "integer",
+                            example: 2025,
+                          },
+                        },
+                      },
+                      bonus_id: {
+                        type: "integer",
+                        description: "ID del bono que se marcó como facturado",
+                        example: 5,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: {
+          description: "Parámetros inválidos o validación fallida",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ErrorResponse",
+              },
+            },
+          },
+        },
+        500: {
+          description: "Error del servidor o número de factura duplicado",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ErrorResponse",
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   "/api/invoices/pending": {
     get: {
       tags: ["Invoices"],

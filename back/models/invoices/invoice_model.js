@@ -83,6 +83,17 @@ const getInvoicesKPIs = async (db, filters = {}) => {
   // Los bonos son 100% neto para la psicóloga (no hay comisión de clínica)
   const totalNetFiltered = sessionsNetFiltered + bonusesGrossFiltered;
 
+  // Obtener count de bonos en el período filtrado
+  const [bonusesCountResult] = await db.execute(
+    `SELECT COUNT(*) as total_bonuses
+     FROM bonuses
+     WHERE is_active = true
+       AND MONTH(created_at) = ?
+       AND YEAR(created_at) = ?`,
+    [targetMonth, targetYear]
+  );
+  const bonusesCountFiltered = parseInt(bonusesCountResult[0].total_bonuses) || 0;
+
   // ============================================
   // CARD 5: Total facturado NETO por clínica (filtrado por mes/año)
   // Incluye bonos en la clínica principal del usuario
@@ -120,6 +131,7 @@ const getInvoicesKPIs = async (db, filters = {}) => {
       clinicData.total_gross += bonusesGrossFiltered;
       clinicData.total_net += bonusesGrossFiltered; // Bonos son 100% neto
       clinicData.bonuses_revenue = parseFloat(bonusesGrossFiltered.toFixed(2));
+      clinicData.total_bonuses = bonusesCountFiltered;
     }
 
     return clinicData;

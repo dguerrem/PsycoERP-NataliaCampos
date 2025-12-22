@@ -154,8 +154,9 @@ const generarFactura = async (req, res) => {
 
       const position = isArray ? `[${index}]` : '';
 
-      if (!invoice_number || !invoice_date || !patient_id || !session_ids || !concept) {
-        errors.push(`Factura${position}: Faltan campos obligatorios (invoice_number, invoice_date, patient_id, session_ids, concept)`);
+      // patient_id es opcional (puede ser null para llamadas)
+      if (!invoice_number || !invoice_date || !session_ids || !concept) {
+        errors.push(`Factura${position}: Faltan campos obligatorios (invoice_number, invoice_date, session_ids, concept)`);
       }
 
       if (session_ids && (!Array.isArray(session_ids) || session_ids.length === 0)) {
@@ -192,7 +193,7 @@ const generarFactura = async (req, res) => {
         const invoiceData = {
           invoice_number,
           invoice_date,
-          patient_id: parseInt(patient_id),
+          patient_id: patient_id ? parseInt(patient_id) : null, // Permitir null para llamadas
           session_ids: session_ids.map(id => parseInt(id)),
           concept
         };

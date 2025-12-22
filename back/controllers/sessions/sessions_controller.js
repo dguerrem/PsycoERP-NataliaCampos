@@ -240,8 +240,14 @@ const actualizarSesion = async (req, res) => {
     if (end_time) updateData.end_time = end_time;
     if (mode) updateData.mode = mode;
     if (status) updateData.status = status;
-    if (price) updateData.price = price;
-    if (payment_method) updateData.payment_method = payment_method;
+    if (price !== undefined) updateData.price = price;
+    if (payment_method) {
+      updateData.payment_method = payment_method;
+      // Si el método de pago es bono, forzar precio a 0
+      if (payment_method === 'bono') {
+        updateData.price = 0;
+      }
+    }
     if (notes) updateData.notes = notes;
 
     // Verificar que se envió al menos un campo para actualizar

@@ -301,15 +301,13 @@ const actualizarSesion = async (req, res) => {
       // Redimir el uso del bono (esto actualiza bonus_id, payment_method y price)
       try {
         await redeemBonusUsage(req.db, parseInt(id), activeBonus.id);
-        logger.info(`Bono redimido para sesión ${id}: bonus_id ${activeBonus.id}`);
         bonusOperationPerformed = true;
-        
+
         // Eliminar payment_method y price de updateData ya que redeemBonusUsage los actualizó
         delete updateData.payment_method;
         delete updateData.price;
       } catch (err) {
-        logger.error("Error al redimir bono:", err.message);
-        
+
         if (err.message === 'SESSION_NOT_FOUND') {
           return res.status(404).json({
             success: false,
@@ -336,13 +334,11 @@ const actualizarSesion = async (req, res) => {
     if (payment_method && payment_method !== 'bono' && previousPaymentMethod === 'bono' && previousBonusId) {
       try {
         await returnBonusUsage(req.db, parseInt(id), previousBonusId);
-        logger.info(`Uso de bono devuelto para sesión ${id}: bonus_id ${previousBonusId}`);
         bonusOperationPerformed = true;
         // NO eliminamos payment_method ni price del updateData porque returnBonusUsage
         // solo limpia bonus_id, y necesitamos updateSession para actualizar los demás campos
       } catch (err) {
-        logger.error("Error al devolver uso del bono:", err.message);
-        
+
         if (err.message === 'SESSION_NOT_FOUND_OR_NOT_LINKED') {
           return res.status(404).json({
             success: false,
@@ -372,7 +368,7 @@ const actualizarSesion = async (req, res) => {
         "SELECT * FROM sessions WHERE id = ? AND is_active = true",
         [parseInt(id)]
       );
-      
+
       return res.json({
         success: true,
         message: "Sesión actualizada exitosamente",
@@ -484,6 +480,38 @@ const eliminarSesion = async (req, res) => {
       });
     }
 
+    // Verificar si la sesión está pagada con bono antes de eliminarla
+    const [sessionRows] = await req.db.execute(
+      "SELECT bonus_id, payment_method FROM sessions WHERE id = ? AND is_active = true",
+      [parseInt(id)]
+    );
+
+    if (sessionRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Sesión no encontrada o ya está eliminada",
+      });
+    }
+
+    const sessionData = sessionRows[0];
+
+    // Si la sesión está pagada con bono, devolver la ocurrencia al bono
+    if (sessionData.bonus_id && sessionData.payment_method === 'bono') {
+      try {
+        await returnBonusUsage(req.db, parseInt(id), sessionData.bonus_id);
+      } catch (err) {
+
+        // Continuar con la eliminación aunque falle la devolución del bono
+        // pero informar al usuario
+        if (err.message === 'BONUS_RETURN_FAILED') {
+          return res.status(409).json({
+            success: false,
+            error: "No se pudo devolver el uso del bono al eliminar la sesión",
+          });
+        }
+      }
+    }
+
     await deleteSession(req.db, parseInt(id));
 
     res.json({
@@ -570,8 +598,8 @@ const obtenerEnlaceWhatsApp = async (req, res) => {
     // Obtener plantilla aleatoria y formatear mensaje
     const randomTemplate = getRandomTemplate();
     const message = randomTemplate.template(
-      sessionData.patient_name, 
-      dateStr, 
+      sessionData.patient_name,
+      dateStr,
       sessionData.start_time
     );
 

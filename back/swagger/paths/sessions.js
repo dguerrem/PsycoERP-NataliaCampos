@@ -586,7 +586,7 @@ const sessionsPaths = {
     delete: {
       tags: ["Sessions"],
       summary: "Eliminar sesión (Soft Delete)",
-      description: "Realiza una eliminación lógica de una sesión marcándola como inactiva. La sesión no será visible en futuras consultas pero se mantiene en la base de datos.",
+      description: "Realiza una eliminación lógica de una sesión marcándola como inactiva. La sesión no será visible en futuras consultas pero se mantiene en la base de datos. Si la sesión estaba pagada con bono, devuelve automáticamente la ocurrencia al bono.",
       parameters: [
         {
           name: "id",
@@ -636,6 +636,26 @@ const sessionsPaths = {
             "application/json": {
               schema: {
                 $ref: "#/components/schemas/ErrorResponse",
+              },
+            },
+          },
+        },
+        409: {
+          description: "No se pudo devolver el uso del bono al eliminar la sesión",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: {
+                    type: "boolean",
+                    example: false,
+                  },
+                  error: {
+                    type: "string",
+                    example: "No se pudo devolver el uso del bono al eliminar la sesión",
+                  },
+                },
               },
             },
           },

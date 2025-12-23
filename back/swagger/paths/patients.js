@@ -28,6 +28,55 @@ const patientsPaths = {
       },
     },
   },
+  "/api/patients/of-principal-clinic": {
+    get: {
+      tags: ["Patients"],
+      summary: "Obtener pacientes activos de la clínica principal del usuario",
+      description: "Obtiene una lista de pacientes activos (is_active = 1 AND status = 'en curso') que pertenecen a la clínica principal del usuario autenticado (filtra por clinic_id = principal_clinic_id del usuario). Devuelve la misma estructura que active-with-clinic pero filtrada por la clínica principal.",
+      responses: {
+        200: {
+          description: "Lista de pacientes activos de la clínica principal obtenida exitosamente",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ActivePatientsWithClinicResponse",
+              },
+            },
+          },
+        },
+        400: {
+          description: "El usuario no tiene una clínica principal asignada",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: {
+                    type: "boolean",
+                    example: false,
+                  },
+                  error: {
+                    type: "string",
+                    example: "El usuario no tiene una clínica principal asignada",
+                  },
+                },
+              },
+            },
+          },
+        },
+        500: {
+          description: "Error interno del servidor",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ErrorResponse",
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   "/api/patients/inactive": {
     get: {
       tags: ["Patients"],

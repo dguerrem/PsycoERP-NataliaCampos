@@ -10,11 +10,13 @@ const {
   restaurarPaciente,
   actualizarPaciente,
   obtenerPacientesActivosConClinica,
+  obtenerPacientesDeClinicaPrincipal,
 } = require("../../controllers/patients/patients_controller");
 
 router.get("/", obtenerPacientes);
 router.post("/", crearPaciente);
 router.get("/active-with-clinic", obtenerPacientesActivosConClinica);
+router.get("/of-principal-clinic", obtenerPacientesDeClinicaPrincipal);
 router.get("/inactive", obtenerPacientesInactivos);
 router.get("/:id", obtenerPacientePorId);
 router.put("/:id", actualizarPaciente);

@@ -7,6 +7,7 @@ const {
   restorePatient,
   updatePatient,
   getActivePatientsWithClinicInfo,
+  getPatientsOfPrincipalClinic,
   hasFutureSessions,
 } = require("../../models/patients/patients_model");
 const logger = require("../../utils/logger");
@@ -667,6 +668,33 @@ const obtenerPacientesActivosConClinica = async (req, res) => {
   }
 };
 
+const obtenerPacientesDeClinicaPrincipal = async (req, res) => {
+  try {
+    const principalClinicId = req.user.principal_clinic_id;
+
+    if (!principalClinicId) {
+      return res.status(400).json({
+        success: false,
+        error: "El usuario no tiene una clínica principal asignada",
+      });
+    }
+
+    const datos = await getPatientsOfPrincipalClinic(req.db, principalClinicId);
+
+    res.json({
+      success: true,
+      total: datos.length,
+      data: datos,
+    });
+  } catch (err) {
+    logger.error("Error al obtener pacientes de clínica principal:", err.message);
+    res.status(500).json({
+      success: false,
+      error: "Error al obtener pacientes de la clínica principal",
+    });
+  }
+};
+
 module.exports = {
   obtenerPacientes,
   obtenerPacientePorId,
@@ -676,4 +704,5 @@ module.exports = {
   restaurarPaciente,
   actualizarPaciente,
   obtenerPacientesActivosConClinica,
+  obtenerPacientesDeClinicaPrincipal,
 };

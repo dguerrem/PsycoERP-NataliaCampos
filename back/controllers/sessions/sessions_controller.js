@@ -8,6 +8,12 @@ const {
   getSessionsKPIs,
 } = require("../../models/sessions/sessions_model");
 
+const {
+  getActiveBonus,
+  redeemBonusUsage,
+  returnBonusUsage,
+} = require("../../models/bonuses/bonuses_model");
+
 const { getRandomTemplate } = require("../../constants/whatsapp-templates");
 const logger = require("../../utils/logger");
 
@@ -258,25 +264,128 @@ const actualizarSesion = async (req, res) => {
       });
     }
 
-    // Si se está actualizando session_date, start_time o end_time, validar horarios
-    if (session_date || start_time || end_time) {
-      // Obtener sesión actual para tener todos los datos
-      const [currentSession] = await req.db.execute(
-        "SELECT session_date, start_time, end_time FROM sessions WHERE id = ? AND is_active = true",
-        [parseInt(id)]
-      );
+    // ============ LÓGICA INTELIGENTE DE BONOS ============
+    // Obtener la sesión actual antes de actualizar para saber su payment_method previo
+    const [currentSessionRows] = await req.db.execute(
+      "SELECT patient_id, payment_method, bonus_id, session_date, start_time, end_time FROM sessions WHERE id = ? AND is_active = true",
+      [parseInt(id)]
+    );
 
-      if (currentSession.length === 0) {
+    if (currentSessionRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Sesión no encontrada",
+      });
+    }
+
+    const currentSessionData = currentSessionRows[0];
+    const previousPaymentMethod = currentSessionData.payment_method;
+    const previousBonusId = currentSessionData.bonus_id;
+    const sessionPatientId = currentSessionData.patient_id;
+
+    // Variable para rastrear si se realizó operación de bono
+    let bonusOperationPerformed = false;
+
+    // Caso 1: Si viene payment_method == 'bono', debe redimir un uso del bono
+    if (payment_method && payment_method === 'bono' && previousPaymentMethod !== 'bono') {
+      // Obtener el bono activo del paciente
+      const activeBonus = await getActiveBonus(req.db, sessionPatientId);
+
+      if (!activeBonus) {
         return res.status(404).json({
           success: false,
-          error: "Sesión no encontrada",
+          error: "El paciente no tiene un bono activo disponible para redimir",
         });
       }
 
+      // Redimir el uso del bono (esto actualiza bonus_id, payment_method y price)
+      try {
+        await redeemBonusUsage(req.db, parseInt(id), activeBonus.id);
+        logger.info(`Bono redimido para sesión ${id}: bonus_id ${activeBonus.id}`);
+        bonusOperationPerformed = true;
+        
+        // Eliminar payment_method y price de updateData ya que redeemBonusUsage los actualizó
+        delete updateData.payment_method;
+        delete updateData.price;
+      } catch (err) {
+        logger.error("Error al redimir bono:", err.message);
+        
+        if (err.message === 'SESSION_NOT_FOUND') {
+          return res.status(404).json({
+            success: false,
+            error: "La sesión especificada no existe o no está activa",
+          });
+        }
+
+        if (err.message === 'BONUS_UPDATE_FAILED') {
+          return res.status(409).json({
+            success: false,
+            error: "No se pudo redimir el uso del bono. Es posible que ya no tenga sesiones disponibles",
+          });
+        }
+
+        return res.status(500).json({
+          success: false,
+          error: "Error al redimir el uso del bono",
+        });
+      }
+    }
+
+    // Caso 2: Si viene payment_method != 'bono' Y la sesión estaba con payment_method == 'bono',
+    // debe devolver un uso del bono
+    if (payment_method && payment_method !== 'bono' && previousPaymentMethod === 'bono' && previousBonusId) {
+      try {
+        await returnBonusUsage(req.db, parseInt(id), previousBonusId);
+        logger.info(`Uso de bono devuelto para sesión ${id}: bonus_id ${previousBonusId}`);
+        bonusOperationPerformed = true;
+        // NO eliminamos payment_method ni price del updateData porque returnBonusUsage
+        // solo limpia bonus_id, y necesitamos updateSession para actualizar los demás campos
+      } catch (err) {
+        logger.error("Error al devolver uso del bono:", err.message);
+        
+        if (err.message === 'SESSION_NOT_FOUND_OR_NOT_LINKED') {
+          return res.status(404).json({
+            success: false,
+            error: "La sesión no está vinculada al bono especificado",
+          });
+        }
+
+        if (err.message === 'BONUS_RETURN_FAILED') {
+          return res.status(409).json({
+            success: false,
+            error: "No se pudo devolver el uso del bono. Es posible que ya esté completamente disponible",
+          });
+        }
+
+        return res.status(500).json({
+          success: false,
+          error: "Error al devolver el uso del bono",
+        });
+      }
+    }
+    // ======================================================
+
+    // Si después de las operaciones de bono no quedan campos para actualizar, 
+    // obtener la sesión actualizada y retornarla
+    if (Object.keys(updateData).length === 0) {
+      const [updatedSessionRows] = await req.db.execute(
+        "SELECT * FROM sessions WHERE id = ? AND is_active = true",
+        [parseInt(id)]
+      );
+      
+      return res.json({
+        success: true,
+        message: "Sesión actualizada exitosamente",
+        data: updatedSessionRows[0],
+      });
+    }
+
+    // Si se está actualizando session_date, start_time o end_time, validar horarios
+    if (session_date || start_time || end_time) {
       // Usar los valores nuevos si se proporcionan, o los actuales si no
-      const finalSessionDate = session_date || currentSession[0].session_date;
-      const finalStartTime = start_time || currentSession[0].start_time;
-      const finalEndTime = end_time || currentSession[0].end_time;
+      const finalSessionDate = session_date || currentSessionData.session_date;
+      const finalStartTime = start_time || currentSessionData.start_time;
+      const finalEndTime = end_time || currentSessionData.end_time;
 
       // Validar horario laboral (7:00 - 22:00) si se modifican las horas
       if (start_time || end_time) {

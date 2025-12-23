@@ -73,7 +73,7 @@ const sessionsPaths = {
           required: false,
           schema: {
             type: "string",
-            enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta"],
+            enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta", "bono"],
           },
           description: "Método de pago",
         },
@@ -249,7 +249,7 @@ const sessionsPaths = {
                 },
                 payment_method: {
                   type: "string",
-                  enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta"],
+                  enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta", "bono"],
                   default: "pendiente",
                   description: "Método de pago",
                 },
@@ -363,7 +363,7 @@ const sessionsPaths = {
       tags: ["Sessions"],
       summary: "Actualizar sesión existente",
       description:
-        "Actualiza una sesión existente con los datos proporcionados. Solo se actualizan los campos enviados. Validaciones: horario entre 08:00-21:00, duración máxima 1 hora, start_time < end_time, sin solapamiento con otras sesiones.",
+        "Actualiza una sesión existente con los datos proporcionados. Solo se actualizan los campos enviados. Validaciones: horario entre 07:00-22:00, duración máxima 1 hora, start_time < end_time, sin solapamiento con otras sesiones. LÓGICA DE BONOS: Si payment_method='bono' y la sesión no estaba con bono, redime automáticamente una ocurrencia del bono activo del paciente. Si payment_method!='bono' y la sesión estaba con bono, devuelve automáticamente la ocurrencia al bono.",
       parameters: [
         {
           name: "id",
@@ -432,8 +432,8 @@ const sessionsPaths = {
                 },
                 payment_method: {
                   type: "string",
-                  enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta"],
-                  description: "Método de pago",
+                  enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta", "bono"],
+                  description: "Método de pago. Si se cambia a 'bono', se redimirá automáticamente una ocurrencia del bono activo del paciente. Si se cambia desde 'bono' a otro método, se devolverá la ocurrencia al bono.",
                 },
                 notes: {
                   type: "string",
@@ -482,17 +482,7 @@ const sessionsPaths = {
           },
         },
         404: {
-          description: "Sesión no encontrada",
-          content: {
-            "application/json": {
-              schema: {
-                $ref: "#/components/schemas/ErrorResponse",
-              },
-            },
-          },
-        },
-        409: {
-          description: "Conflicto de horarios - Ya existe una sesión en ese rango horario",
+          description: "Sesión no encontrada o paciente sin bono activo disponible",
           content: {
             "application/json": {
               schema: {
@@ -504,10 +494,51 @@ const sessionsPaths = {
                   },
                   error: {
                     type: "string",
-                    example: "El horario de esta sesión se solapa con otra sesión existente. Por favor, selecciona un horario diferente.",
+                    examples: {
+                      sessionNotFound: {
+                        value: "Sesión no encontrada",
+                      },
+                      noBonusAvailable: {
+                        value: "El paciente no tiene un bono activo disponible para redimir",
+                      },
+                      sessionNotLinked: {
+                        value: "La sesión no está vinculada al bono especificado",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        409: {
+          description: "Conflicto de horarios o error en operación de bonos",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: {
+                    type: "boolean",
+                    example: false,
+                  },
+                  error: {
+                    type: "string",
+                    examples: {
+                      timeConflict: {
+                        value: "El horario de esta sesión se solapa con otra sesión existente. Por favor, selecciona un horario diferente.",
+                      },
+                      bonusRedeemFailed: {
+                        value: "No se pudo redimir el uso del bono. Es posible que ya no tenga sesiones disponibles",
+                      },
+                      bonusReturnFailed: {
+                        value: "No se pudo devolver el uso del bono. Es posible que ya esté completamente disponible",
+                      },
+                    },
                   },
                   conflicting_session: {
                     type: "object",
+                    description: "Solo presente cuando el error es por conflicto de horarios",
                     properties: {
                       id: {
                         type: "integer",
@@ -827,7 +858,7 @@ const sessionsPaths = {
           required: false,
           schema: {
             type: "string",
-            enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta"],
+            enum: ["pendiente", "transferencia", "bizum", "efectivo", "tarjeta", "bono"],
           },
           description: "Método de pago para filtrar las sesiones.",
         },

@@ -288,11 +288,12 @@ const redeemBonusUsage = async (db, session_id, bonus_id) => {
     await db.query('START TRANSACTION');
 
     try {
-        // 1. Actualizar la sesión con el bonus_id y payment_method
+        // 1. Actualizar la sesión con el bonus_id, payment_method y price = 0
         const updateSessionQuery = `
             UPDATE sessions
             SET bonus_id = ?,
-                payment_method = 'bono'
+                payment_method = 'bono',
+                price = 0
             WHERE id = ?
               AND is_active = true
         `;
@@ -429,6 +430,88 @@ const updateBonusExpirationDate = async (db, bonus_id, expiration_date) => {
     };
 };
 
+// Devolver un uso del bono (contrario de redeem) - para cuando se cambia el método de pago
+const returnBonusUsage = async (db, session_id, bonus_id) => {
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
+
+    try {
+        // 1. Actualizar la sesión quitando el bonus_id y cambiando payment_method
+        const updateSessionQuery = `
+            UPDATE sessions
+            SET bonus_id = NULL
+            WHERE id = ?
+              AND is_active = true
+              AND bonus_id = ?
+        `;
+
+        const [sessionResult] = await db.execute(updateSessionQuery, [session_id, bonus_id]);
+
+        if (sessionResult.affectedRows === 0) {
+            throw new Error('SESSION_NOT_FOUND_OR_NOT_LINKED');
+        }
+
+        // 2. Incrementar remaining_sessions del bono
+        const updateBonusQuery = `
+            UPDATE bonuses
+            SET remaining_sessions = remaining_sessions + 1
+            WHERE id = ?
+              AND is_active = true
+              AND remaining_sessions < sessions_number
+        `;
+
+        const [bonusResult] = await db.execute(updateBonusQuery, [bonus_id]);
+
+        if (bonusResult.affectedRows === 0) {
+            throw new Error('BONUS_RETURN_FAILED');
+        }
+
+        // Confirmar transacción
+        await db.query('COMMIT');
+
+        // 3. Obtener datos actualizados del bono
+        const getBonusQuery = `
+            SELECT
+                b.id,
+                b.patient_id,
+                b.sessions_number,
+                b.price_per_session,
+                b.total_price,
+                b.remaining_sessions,
+                DATE_FORMAT(b.expiration_date, '%Y-%m-%d') as expiration_date,
+                DATE_FORMAT(b.created_at, '%Y-%m-%d') as created_at,
+                DATE_FORMAT(b.updated_at, '%Y-%m-%d') as updated_at,
+                CONCAT(p.first_name, ' ', p.last_name) as patient_name
+            FROM bonuses b
+            LEFT JOIN patients p ON b.patient_id = p.id AND p.is_active = true
+            WHERE b.id = ?
+        `;
+
+        const [bonusRows] = await db.execute(getBonusQuery, [bonus_id]);
+        const bonus = bonusRows[0];
+
+        return {
+            id: bonus.id,
+            patient_id: bonus.patient_id,
+            patient_name: bonus.patient_name,
+            sessions_number: bonus.sessions_number,
+            price_per_session: parseFloat(bonus.price_per_session),
+            total_price: parseFloat(bonus.total_price),
+            remaining_sessions: bonus.remaining_sessions,
+            used_sessions: bonus.sessions_number - bonus.remaining_sessions,
+            status: bonus.remaining_sessions === 0 ? 'consumed' : 'active',
+            expiration_date: bonus.expiration_date,
+            created_at: bonus.created_at,
+            updated_at: bonus.updated_at,
+        };
+
+    } catch (error) {
+        // Revertir transacción en caso de error
+        await db.query('ROLLBACK');
+        throw error;
+    }
+};
+
 // Eliminar bono (soft delete) solo si no se ha usado y no está expirado
 const deleteBonus = async (db, bonus_id) => {
     // Primero verificar si el bono existe y cumple las condiciones para ser eliminado
@@ -490,6 +573,7 @@ module.exports = {
     hasActiveBonus,
     getActiveBonus,
     redeemBonusUsage,
+    returnBonusUsage,
     updateBonusExpirationDate,
     deleteBonus,
 };

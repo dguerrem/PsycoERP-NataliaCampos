@@ -249,8 +249,8 @@ export class NewSessionFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadPatients();
     this.initializeForm();
+    this.loadPatients();
 
     // Load clinical notes if in edit mode
     if (this.isEditMode) {
@@ -590,6 +590,9 @@ export class NewSessionFormComponent implements OnInit {
               if (patientId !== null) {
                 this.checkPatientActiveBonus(patientId);
               }
+
+              // Apply payment method logic for edit mode
+              this.applyInitialPaymentMethodLogic();
             }
           }
         },
@@ -597,6 +600,20 @@ export class NewSessionFormComponent implements OnInit {
           console.error('Error loading patients:', error);
         },
       });
+  }
+
+  /**
+   * Apply payment method logic when loading a session in edit mode
+   * If session was paid with 'bono', disable and set base_price to 0
+   */
+  private applyInitialPaymentMethodLogic(): void {
+    if (!this.isEditMode || !this.prefilledData?.sessionData) return;
+
+    const paymentMethod = this.prefilledData.sessionData.SessionDetailData.payment_method;
+
+    if (paymentMethod === 'bono') {
+      this.handlePaymentMethodChange('bono');
+    }
   }
 
   /**

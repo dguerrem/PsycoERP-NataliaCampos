@@ -887,6 +887,7 @@ export class CalendarComponent implements OnInit {
     paymentMethod: string;
     invoiced: boolean;
     notes: string;
+    isCall: boolean;
   } {
     const session = sessionData.SessionDetailData;
     let patientName = session.PatientData.name || 'Sin nombre';
@@ -904,7 +905,8 @@ export class CalendarComponent implements OnInit {
       price: this.formatPrice(session.price),
       paymentMethod: this.formatPaymentMethod(session.payment_method),
       invoiced: session.invoiced,
-      notes: session.notes || 'Sin notas'
+      notes: session.notes || 'Sin notas',
+      isCall: session.is_call || false
     };
   }
 

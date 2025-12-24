@@ -127,6 +127,10 @@
             <div class="text-xs text-muted-foreground">({{ clinic.clinic_percentage }}%)</div>
           </div>
           <div class="text-xs text-muted-foreground">Bruto: {{ formatCurrency(clinic.total_gross) }}</div>
+          @if (clinic.total_bonuses > 0) {
+          <div class="text-xs text-muted-foreground">Bonos: {{ clinic.total_bonuses }}</div>
+          <div class="text-xs text-muted-foreground">Total bonos: {{ formatCurrency(clinic.bonuses_revenue) }}</div>
+          }
         </div>
         }
       </div>

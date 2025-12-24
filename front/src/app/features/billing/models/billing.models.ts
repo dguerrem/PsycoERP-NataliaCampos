@@ -8,6 +8,8 @@ export interface ClinicTotal {
   total_gross: number;
   clinic_percentage: number;
   total_net: number;
+  total_bonuses: number;
+  bonuses_revenue: number;
 }
 
 export interface InvoiceKPIs {

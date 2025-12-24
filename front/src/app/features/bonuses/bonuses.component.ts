@@ -97,7 +97,7 @@ export class BonusesComponent implements OnInit {
   private loadPatients(): void {
     this.http
       .get<{ data: PatientSelector[] }>(
-        `${environment.api.baseUrl}/patients/active-with-clinic`
+        `${environment.api.baseUrl}/patients/of-principal-clinic`
       )
       .subscribe({
         next: (response) => {

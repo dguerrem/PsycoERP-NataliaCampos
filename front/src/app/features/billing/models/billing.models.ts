@@ -201,3 +201,72 @@ export interface ExistingClinicInvoicesResponse {
   total_clinics: number;
   clinics: ExistingClinicInvoice[];
 }
+
+/**
+ * Bono pendiente de facturar
+ */
+export interface PendingBonusInvoice {
+  bonus_id: number;
+  patient_id: number;
+  patient_full_name: string;
+  dni: string;
+  email: string;
+  patient_address_line1: string;
+  patient_address_line2: string;
+  clinic_name: string;
+  sessions_number: number;
+  total_gross: number;
+  progenitors_data?: ProgenitorsData;
+}
+
+/**
+ * Response de bonos pendientes de facturar
+ */
+export interface PendingBonusInvoicesResponse {
+  filters_applied: {
+    month: number;
+    year: number;
+  };
+  pending_invoices: PendingBonusInvoice[];
+}
+
+/**
+ * Factura de bono existente
+ */
+export interface ExistingBonusInvoice {
+  id: number;
+  invoice_number: string;
+  invoice_date: string;
+  bonus_id: number;
+  patient_id: number;
+  patient_full_name: string;
+  dni: string;
+  email: string;
+  patient_address_line1: string;
+  patient_address_line2: string;
+  sessions_number: number;
+  total: number;
+  concept: string;
+}
+
+/**
+ * Response de facturas de bonos existentes
+ */
+export interface ExistingBonusInvoicesResponse {
+  filters_applied: {
+    month: number;
+    year: number;
+  };
+  total_invoices: number;
+  invoices: ExistingBonusInvoice[];
+}
+
+/**
+ * Request para generar factura de bono
+ */
+export interface GenerateBonusInvoiceRequest {
+  invoice_number: string;
+  invoice_date: string;
+  bonus_id: number;
+  concept: string;
+}

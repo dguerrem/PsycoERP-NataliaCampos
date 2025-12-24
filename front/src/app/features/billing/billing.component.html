@@ -20,7 +20,7 @@
           <!-- Tab Headers -->
           <div class="border-b px-6 pt-6">
             <div data-slot="tabs-list"
-              class="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-2">
+              class="bg-muted text-muted-foreground h-9 items-center justify-center rounded-lg p-[3px] grid w-full grid-cols-3">
               <button type="button" (click)="onTabChange('bulk')"
                 [attr.data-state]="activeTab() === 'bulk' ? 'active' : 'inactive'" data-slot="tabs-trigger"
                 class="data-[state=active]:bg-background dark:data-[state=active]:text-foreground text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] data-[state=active]:shadow-sm flex items-center gap-2">
@@ -49,6 +49,16 @@
                 </svg>
                 Facturación Clínicas
               </button>
+              <button type="button" (click)="onTabChange('bonuses')"
+                [attr.data-state]="activeTab() === 'bonuses' ? 'active' : 'inactive'" data-slot="tabs-trigger"
+                class="data-[state=active]:bg-background dark:data-[state=active]:text-foreground text-foreground dark:text-muted-foreground h-[calc(100%-1px)] flex-1 justify-center rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] data-[state=active]:shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                  <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+                Facturación Bonos
+              </button>
             </div>
           </div>
 
@@ -72,7 +82,7 @@
               (downloadBulkInvoices)="downloadBulkInvoices($event)"
               (existingSubTabActivated)="loadExistingInvoices()">
             </app-bulk-invoicing>
-            } @else {
+            } @else if (activeTab() === 'clinics') {
             <!-- Componente de Facturación Clínicas -->
             <app-clinic-invoicing [clinicsMonth]="clinicsMonth()" [clinicsYear]="clinicsYear()"
               [monthNames]="monthNames" [years]="years()" [clinicInvoices]="clinicInvoices()"
@@ -91,6 +101,35 @@
               (previewExistingClinicInvoice)="previewExistingClinicInvoice($event)"
               (existingClinicSubTabActivated)="loadExistingClinicInvoices()">
             </app-clinic-invoicing>
+            } @else if (activeTab() === 'bonuses') {
+            <!-- Componente de Facturación Bonos -->
+            <app-bonus-invoicing
+              [bonusMonth]="bonusMonth()"
+              [bonusYear]="bonusYear()"
+              [monthNames]="monthNames"
+              [years]="years()"
+              [bonusInvoices]="bonusInvoices()"
+              [isLoadingBonus]="isLoadingBonus()"
+              [invoicePrefix]="invoicePrefix()"
+              [invoiceYear]="invoiceYear()"
+              [invoiceNextNumber]="invoiceNextNumber()"
+              [existingBonusMonth]="existingBonusMonth()"
+              [existingBonusYear]="existingBonusYear()"
+              [existingBonusInvoices]="existingBonusInvoices()"
+              [isLoadingExistingBonus]="isLoadingExistingBonus()"
+              (monthChange)="onBonusMonthChange($event)"
+              (yearChange)="onBonusYearChange($event)"
+              (generateInvoice)="generateBonusInvoice($event)"
+              (previewInvoice)="previewBonusPendingInvoice($event)"
+              (prefixChange)="invoicePrefix.set($event)"
+              (invoiceYearChange)="invoiceYear.set($event); onInvoiceYearChange()"
+              (invoiceYearValidate)="validateInvoiceYear()"
+              (existingMonthChange)="onExistingBonusMonthChange($event)"
+              (existingYearChange)="onExistingBonusYearChange($event)"
+              (previewExistingInvoice)="previewExistingBonusInvoice($event)"
+              (downloadInvoice)="downloadBonusInvoice($event)"
+              (existingSubTabActivated)="loadExistingBonusInvoices()">
+            </app-bonus-invoicing>
             }
           </div>
         </div>

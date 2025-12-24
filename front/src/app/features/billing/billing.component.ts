@@ -16,6 +16,8 @@ import {
   ExistingInvoice,
   ClinicInvoiceData,
   ExistingClinicInvoice,
+  PendingBonusInvoice,
+  ExistingBonusInvoice,
 } from './models/billing.models';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { ReusableModalComponent } from '../../shared/components/reusable-modal/reusable-modal.component';
@@ -29,6 +31,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { FilterAnalysisComponent } from './components/filter-analysis/filter-analysis.component';
 import { BulkInvoicingComponent } from './components/bulk-invoicing/bulk-invoicing.component';
 import { ClinicInvoicingComponent } from './components/clinic-invoicing/clinic-invoicing.component';
+import { BonusInvoicingComponent } from './components/bonus-invoicing/bonus-invoicing.component';
 import { ExistingInvoicesComponent } from './components/existing-invoices/existing-invoices.component';
 import { BulkInvoiceModalComponent } from './components/bulk-invoice-modal/bulk-invoice-modal.component';
 import { ClinicInvoiceModalComponent } from './components/clinic-invoice-modal/clinic-invoice-modal.component';
@@ -75,6 +78,7 @@ interface ClinicInvoiceToGenerate {
     FilterAnalysisComponent,
     BulkInvoicingComponent,
     ClinicInvoicingComponent,
+    BonusInvoicingComponent,
     BulkInvoiceModalComponent,
     ClinicInvoiceModalComponent,
     ClinicInvoicePreviewComponent,
@@ -91,7 +95,7 @@ export class BillingComponent implements OnInit {
   private pdfGeneratorService = inject(PdfGeneratorService);
 
   // Signals para estado del componente
-  activeTab = signal<'bulk' | 'clinics'>('bulk');
+  activeTab = signal<'bulk' | 'clinics' | 'bonuses'>('bulk');
 
   // Filtros para KPIs (Período de Análisis)
   kpiMonth = signal(new Date().getMonth() + 1);
@@ -113,11 +117,21 @@ export class BillingComponent implements OnInit {
   existingClinicMonth = signal(new Date().getMonth() + 1);
   existingClinicYear = signal(new Date().getFullYear());
 
+  // Filtros para Bonos Pendientes
+  bonusMonth = signal(new Date().getMonth() + 1);
+  bonusYear = signal(new Date().getFullYear());
+
+  // Filtros para Facturas de Bonos Existentes
+  existingBonusMonth = signal(new Date().getMonth() + 1);
+  existingBonusYear = signal(new Date().getFullYear());
+
   kpis = signal<InvoiceKPIs | null>(null);
   pendingInvoices = signal<PendingInvoice[]>([]);
   existingInvoices = signal<ExistingInvoice[]>([]);
   clinicInvoices = signal<ClinicInvoiceData[]>([]);
   existingClinicInvoices = signal<ExistingClinicInvoice[]>([]);
+  bonusInvoices = signal<PendingBonusInvoice[]>([]);
+  existingBonusInvoices = signal<ExistingBonusInvoice[]>([]);
   selectedPatients = signal<string[]>([]);
   selectedClinicId = signal<number | null>(null);
 
@@ -151,6 +165,8 @@ export class BillingComponent implements OnInit {
   isLoadingExisting = signal(false);
   isLoadingClinics = signal(false);
   isLoadingExistingClinics = signal(false);
+  isLoadingBonus = signal(false);
+  isLoadingExistingBonus = signal(false);
 
   // Error state
   errorMessage = signal<string | null>(null);
@@ -531,10 +547,12 @@ export class BillingComponent implements OnInit {
   /**
    * Cambia entre tabs
    */
-  onTabChange(tab: 'bulk' | 'clinics') {
+  onTabChange(tab: 'bulk' | 'clinics' | 'bonuses') {
     this.activeTab.set(tab);
     if (tab === 'clinics' && this.clinicInvoices().length === 0) {
       this.loadClinicInvoices();
+    } else if (tab === 'bonuses' && this.bonusInvoices().length === 0) {
+      this.loadBonusInvoices();
     }
   }
 
@@ -1303,6 +1321,227 @@ export class BillingComponent implements OnInit {
     if (dateStr.includes('/')) return dateStr;
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Carga los bonos pendientes de facturar
+   */
+  loadBonusInvoices() {
+    this.isLoadingBonus.set(true);
+    this.billingService
+      .getPendingBonusInvoices(this.bonusMonth(), this.bonusYear())
+      .subscribe({
+        next: (response) => {
+          this.bonusInvoices.set(response.data.pending_invoices || []);
+          this.isLoadingBonus.set(false);
+        },
+        error: (error) => {
+          console.error('Error cargando bonos:', error);
+          this.isLoadingBonus.set(false);
+        },
+      });
+  }
+
+  /**
+   * Carga las facturas de bonos existentes
+   */
+  loadExistingBonusInvoices() {
+    this.isLoadingExistingBonus.set(true);
+    this.billingService
+      .getExistingBonusInvoices(
+        this.existingBonusMonth(),
+        this.existingBonusYear()
+      )
+      .subscribe({
+        next: (response) => {
+          this.existingBonusInvoices.set(response.data.invoices || []);
+          this.isLoadingExistingBonus.set(false);
+        },
+        error: (error) => {
+          console.error('Error cargando facturas de bonos:', error);
+          this.isLoadingExistingBonus.set(false);
+        },
+      });
+  }
+
+  /**
+   * Maneja el cambio de mes en el filtro de Bonos
+   */
+  onBonusMonthChange(month: number | Event) {
+    const value =
+      typeof month === 'number'
+        ? month
+        : parseInt((month.target as HTMLSelectElement).value);
+    this.bonusMonth.set(value);
+    this.loadBonusInvoices();
+  }
+
+  /**
+   * Maneja el cambio de año en el filtro de Bonos
+   */
+  onBonusYearChange(year: number | Event) {
+    const value =
+      typeof year === 'number'
+        ? year
+        : parseInt((year.target as HTMLSelectElement).value);
+    this.bonusYear.set(value);
+    this.loadBonusInvoices();
+  }
+
+  /**
+   * Maneja el cambio de mes para facturas de bonos existentes
+   */
+  onExistingBonusMonthChange(month: number | Event) {
+    const monthValue =
+      typeof month === 'number'
+        ? month
+        : parseInt((month.target as HTMLSelectElement).value);
+    this.existingBonusMonth.set(monthValue);
+    this.loadExistingBonusInvoices();
+  }
+
+  /**
+   * Maneja el cambio de año para facturas de bonos existentes
+   */
+  onExistingBonusYearChange(year: number | Event) {
+    const yearValue =
+      typeof year === 'number'
+        ? year
+        : parseInt((year.target as HTMLSelectElement).value);
+    this.existingBonusYear.set(yearValue);
+    this.loadExistingBonusInvoices();
+  }
+
+  /**
+   * Genera una factura para un bono
+   */
+  generateBonusInvoice(bonusId: number) {
+    const bonus = this.bonusInvoices().find((b) => b.bonus_id === bonusId);
+    if (!bonus) {
+      this.toastService.showError('No se encontró el bono seleccionado');
+      return;
+    }
+
+    // Preparar el número de factura
+    const invoiceNumber = `${this.invoicePrefix()}-${this.invoiceYear()}-${this.padNumber(
+      this.invoiceNextNumber()
+    )}`;
+    const invoiceDate = new Date().toISOString().split('T')[0];
+    const monthName = this.monthNames[this.bonusMonth() - 1];
+    const concept = `Venta de bono - ${monthName} ${this.bonusYear()}`;
+
+    // Crear el payload
+    const payload = {
+      invoice_number: invoiceNumber,
+      invoice_date: invoiceDate,
+      bonus_id: bonusId,
+      concept,
+    };
+
+    // Activar spinner
+    this.isGeneratingBulkInvoices.set(true);
+
+    // Llamar al servicio
+    this.billingService.generateBonusInvoice(payload).subscribe({
+      next: (response: any) => {
+        if (response?.success === false) {
+          this.toastService.showError(
+            response.message || 'Error al generar la factura del bono'
+          );
+        } else {
+          this.toastService.showSuccess('Factura de bono generada exitosamente');
+          // Recargar datos
+          this.loadKPIs();
+          this.loadBonusInvoices();
+          this.loadExistingBonusInvoices();
+          this.loadLastInvoiceNumber();
+        }
+        this.isGeneratingBulkInvoices.set(false);
+      },
+      error: () => {
+        this.toastService.showError('Error al generar la factura del bono');
+        this.isGeneratingBulkInvoices.set(false);
+      },
+    });
+  }
+
+  /**
+   * Vista previa de una factura de bono pendiente (NO permitir descarga)
+   */
+  previewBonusPendingInvoice(bonusId: number) {
+    const bonus = this.bonusInvoices().find((b) => b.bonus_id === bonusId);
+    if (!bonus) {
+      this.toastService.showError('No se encontró el bono seleccionado');
+      return;
+    }
+
+    // Convertir PendingBonusInvoice a InvoicePreviewData
+    // Creamos sesiones ficticias para la vista previa
+    const sessions = Array.from({ length: bonus.sessions_number }, (_, i) => ({
+      session_id: i + 1,
+      session_date: new Date().toISOString().split('T')[0],
+      price: bonus.total_gross / bonus.sessions_number,
+    }));
+
+    const previewData: InvoicePreviewData = {
+      patient_full_name: bonus.patient_full_name,
+      dni: bonus.dni,
+      email: bonus.email,
+      pending_sessions_count: bonus.sessions_number,
+      total_gross: bonus.total_gross,
+      invoice_number: `${this.invoicePrefix()}-${this.invoiceYear()}-${this.padNumber(
+        this.invoiceNextNumber()
+      )}`,
+      invoice_date: new Date().toISOString().split('T')[0],
+      sessions,
+      progenitors_data: bonus.progenitors_data,
+    };
+
+    this.previewInvoiceData.set(previewData);
+    this.allowPreviewDownload.set(false); // No permitir descarga desde bonos pendientes
+    this.isPreviewModalOpen.set(true);
+  }
+
+  /**
+   * Vista previa de una factura de bono existente (SÍ permitir descarga)
+   */
+  previewExistingBonusInvoice(invoiceId: number) {
+    const invoice = this.existingBonusInvoices().find((i) => i.id === invoiceId);
+    if (!invoice) {
+      this.toastService.showError('No se encontró la factura seleccionada');
+      return;
+    }
+
+    // Convertir ExistingBonusInvoice a InvoicePreviewData
+    // Creamos sesiones ficticias para la vista previa
+    const sessions = Array.from({ length: invoice.sessions_number }, (_, i) => ({
+      session_id: i + 1,
+      session_date: invoice.invoice_date,
+      price: invoice.total / invoice.sessions_number,
+    }));
+
+    const previewData: InvoicePreviewData = {
+      patient_full_name: invoice.patient_full_name,
+      dni: invoice.dni,
+      email: invoice.email,
+      pending_sessions_count: invoice.sessions_number,
+      total_gross: invoice.total,
+      invoice_number: invoice.invoice_number,
+      invoice_date: invoice.invoice_date,
+      sessions,
+    };
+
+    this.previewInvoiceData.set(previewData);
+    this.allowPreviewDownload.set(true); // SÍ permitir descarga desde facturas existentes
+    this.isPreviewModalOpen.set(true);
+  }
+
+  /**
+   * Descarga una factura de bono (reutiliza la funcionalidad de vista previa con descarga)
+   */
+  downloadBonusInvoice(invoiceId: number) {
+    // Primero abrir la vista previa que ya permite descarga
+    this.previewExistingBonusInvoice(invoiceId);
   }
 
   /**

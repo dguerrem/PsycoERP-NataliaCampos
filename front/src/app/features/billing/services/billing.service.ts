@@ -9,7 +9,10 @@ import {
   CreateBulkInvoicesRequest,
   CreateInvoiceResponse,
   PendingClinicInvoicesResponse,
-  ExistingClinicInvoice
+  ExistingClinicInvoice,
+  PendingBonusInvoicesResponse,
+  ExistingBonusInvoicesResponse,
+  GenerateBonusInvoiceRequest
 } from '../models/billing.models';
 import { environment } from '../../../../environments/environment';
 
@@ -258,6 +261,64 @@ export class BillingService {
       );
   }
 
+  /**
+   * Obtiene los bonos pendientes de facturar filtrados por mes y año
+   */
+  getPendingBonusInvoices(month: number, year: number): Observable<ApiResponse<PendingBonusInvoicesResponse>> {
+    this.error.set(null);
+
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<PendingBonusInvoicesResponse>>(`${this.baseUrl}/invoices/pending-of-bonuses`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error al obtener bonos pendientes de facturar:', error);
+          this.error.set('Error al cargar los bonos pendientes de facturar');
+          return of({ data: this.getEmptyPendingBonuses(month, year) });
+        })
+      );
+  }
+
+  /**
+   * Obtiene las facturas de bonos existentes filtradas por mes y año
+   */
+  getExistingBonusInvoices(month: number, year: number): Observable<ApiResponse<ExistingBonusInvoicesResponse>> {
+    this.error.set(null);
+
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<ExistingBonusInvoicesResponse>>(`${this.baseUrl}/invoices/of-bonuses`, { params })
+      .pipe(
+        catchError(error => {
+          console.error('Error al obtener facturas de bonos existentes:', error);
+          this.error.set('Error al cargar las facturas de bonos existentes');
+          return of({ data: this.getEmptyExistingBonuses(month, year) });
+        })
+      );
+  }
+
+  /**
+   * Genera una factura para un bono
+   */
+  generateBonusInvoice(request: GenerateBonusInvoiceRequest): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/invoices/of-bonuses`, request).pipe(
+      catchError(error => {
+        console.error('Error al generar factura de bono:', error);
+
+        if (error.error && typeof error.error === 'object') {
+          return of(error.error);
+        }
+
+        this.error.set('Error al generar la factura del bono');
+        return of({ success: false, message: error.message || 'Error al generar la factura' });
+      })
+    );
+  }
+
   // Helpers para respuestas vacías
   private getEmptyKPIs(month: number, year: number): InvoiceKPIs {
     return {
@@ -285,6 +346,21 @@ export class BillingService {
       invoices: [],
       total_call_invoices: 0,
       call_invoices: []
+    };
+  }
+
+  private getEmptyPendingBonuses(month: number, year: number): PendingBonusInvoicesResponse {
+    return {
+      filters_applied: { month, year },
+      pending_invoices: []
+    };
+  }
+
+  private getEmptyExistingBonuses(month: number, year: number): ExistingBonusInvoicesResponse {
+    return {
+      filters_applied: { month, year },
+      total_invoices: 0,
+      invoices: []
     };
   }
 }

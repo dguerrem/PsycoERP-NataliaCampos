@@ -155,6 +155,13 @@
   (preview)="previewClinicInvoice()">
 </app-clinic-invoice-modal>
 
+<!-- Modal de generación de factura de bono -->
+<app-bonus-invoice-modal [isOpen]="isBonusModalOpen()" [bonusInvoiceToGenerate]="bonusInvoiceToGenerate()"
+  [errorMessage]="errorMessage()" (submit)="confirmGenerateBonusInvoice()"
+  (cancel)="closeBonusModal()" (closeError)="closeErrorMessage()" (updateDate)="updateBonusInvoiceDate($event)"
+  (preview)="previewBonusInvoice()">
+</app-bonus-invoice-modal>
+
 <!-- Modal de vista previa de factura -->
 <app-invoice-preview [isOpen]="isPreviewModalOpen()" [invoiceData]="previewInvoiceData()" [userData]="userData()"
   [allowDownload]="allowPreviewDownload()"

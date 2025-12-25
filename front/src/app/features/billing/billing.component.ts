@@ -35,6 +35,7 @@ import { BonusInvoicingComponent } from './components/bonus-invoicing/bonus-invo
 import { ExistingInvoicesComponent } from './components/existing-invoices/existing-invoices.component';
 import { BulkInvoiceModalComponent } from './components/bulk-invoice-modal/bulk-invoice-modal.component';
 import { ClinicInvoiceModalComponent } from './components/clinic-invoice-modal/clinic-invoice-modal.component';
+import { BonusInvoiceModalComponent } from './components/bonus-invoice-modal/bonus-invoice-modal.component';
 import { ClinicInvoicePreviewComponent } from './components/clinic-invoice-preview/clinic-invoice-preview.component';
 import { InvoiceLoadingSpinnerComponent } from './components/invoice-loading-spinner/invoice-loading-spinner.component';
 
@@ -63,6 +64,17 @@ interface ClinicInvoiceToGenerate {
   total: number;
 }
 
+interface BonusInvoiceToGenerate {
+  bonus_id: number;
+  patient_full_name: string;
+  dni: string;
+  email: string;
+  sessions_number: number;
+  total_gross: number;
+  invoice_number: string;
+  invoice_date: string;
+}
+
 /**
  * Componente de facturación
  * Gestiona generación masiva de facturas y visualización de KPIs
@@ -81,6 +93,7 @@ interface ClinicInvoiceToGenerate {
     BonusInvoicingComponent,
     BulkInvoiceModalComponent,
     ClinicInvoiceModalComponent,
+    BonusInvoiceModalComponent,
     ClinicInvoicePreviewComponent,
     InvoiceLoadingSpinnerComponent,
   ],
@@ -148,6 +161,10 @@ export class BillingComponent implements OnInit {
   // Modal state for clinic invoice
   isClinicModalOpen = signal(false);
   clinicInvoiceToGenerate = signal<ClinicInvoiceToGenerate | null>(null);
+
+  // Modal state for bonus invoice
+  isBonusModalOpen = signal(false);
+  bonusInvoiceToGenerate = signal<BonusInvoiceToGenerate | null>(null);
 
   // Preview modal state
   isPreviewModalOpen = signal(false);
@@ -1429,7 +1446,7 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Genera una factura para el bono seleccionado
+   * Abre el modal de confirmación para generar factura de bono
    */
   generateBonusInvoice() {
     const bonusId = this.selectedBonusId();
@@ -1437,55 +1454,147 @@ export class BillingComponent implements OnInit {
       return;
     }
 
-    const bonus = this.bonusInvoices().find((b) => b.bonus_id === bonusId);
-    if (!bonus) {
-      this.toastService.showError('No se encontró el bono seleccionado');
+    const bonusInvoice = this.prepareBonusInvoiceData(bonusId);
+    if (!bonusInvoice) {
       return;
     }
 
-    // Preparar el número de factura
+    this.bonusInvoiceToGenerate.set(bonusInvoice);
+    this.isBonusModalOpen.set(true);
+  }
+
+  /**
+   * Prepara los datos de una factura de bono pendiente
+   * @param bonusId ID del bono
+   * @returns Datos de la factura o null si hay error
+   */
+  private prepareBonusInvoiceData(
+    bonusId: number
+  ): BonusInvoiceToGenerate | null {
+    // Obtener los datos del bono seleccionado
+    const bonus = this.bonusInvoices().find((b) => b.bonus_id === bonusId);
+    if (!bonus) {
+      this.toastService.showError('No se encontró el bono seleccionado');
+      return null;
+    }
+
     const invoiceNumber = `${this.invoicePrefix()}-${this.invoiceYear()}-${this.padNumber(
       this.invoiceNextNumber()
     )}`;
     const invoiceDate = new Date().toISOString().split('T')[0];
+
+    // Preparar datos de la factura
+    return {
+      bonus_id: bonus.bonus_id,
+      patient_full_name: bonus.patient_full_name,
+      dni: bonus.dni,
+      email: bonus.email,
+      sessions_number: bonus.sessions_number,
+      total_gross: bonus.total_gross,
+      invoice_number: invoiceNumber,
+      invoice_date: invoiceDate,
+    };
+  }
+
+  /**
+   * Cierra el modal de generación de factura de bono
+   */
+  closeBonusModal() {
+    this.isBonusModalOpen.set(false);
+    this.bonusInvoiceToGenerate.set(null);
+    this.errorMessage.set(null);
+  }
+
+  /**
+   * Actualiza la fecha de emisión de la factura de bono
+   */
+  updateBonusInvoiceDate(newDate: string) {
+    const invoice = this.bonusInvoiceToGenerate();
+    if (invoice) {
+      this.bonusInvoiceToGenerate.set({ ...invoice, invoice_date: newDate });
+    }
+  }
+
+  /**
+   * Vista previa de la factura de bono (desde modal de generación - NO permitir descarga)
+   */
+  previewBonusInvoice() {
+    const invoice = this.bonusInvoiceToGenerate();
+    if (!invoice) {
+      return;
+    }
+
+    // Convertir a InvoicePreviewData
+    const sessions = Array.from({ length: invoice.sessions_number }, (_, i) => ({
+      session_id: i + 1,
+      session_date: invoice.invoice_date,
+      price: invoice.total_gross / invoice.sessions_number,
+    }));
+
+    const previewData: InvoicePreviewData = {
+      patient_full_name: invoice.patient_full_name,
+      dni: invoice.dni,
+      email: invoice.email,
+      pending_sessions_count: invoice.sessions_number,
+      total_gross: invoice.total_gross,
+      invoice_number: invoice.invoice_number,
+      invoice_date: invoice.invoice_date,
+      sessions,
+      isBonusInvoice: true,
+    };
+
+    this.previewInvoiceData.set(previewData);
+    this.allowPreviewDownload.set(false);
+    this.isPreviewModalOpen.set(true);
+  }
+
+  /**
+   * Confirma y genera la factura de bono desde el modal
+   */
+  confirmGenerateBonusInvoice() {
+    const invoice = this.bonusInvoiceToGenerate();
+    if (!invoice) {
+      return;
+    }
+
+    this.isGeneratingBulkInvoices.set(true);
+
     const monthName = this.monthNames[this.bonusMonth() - 1];
     const concept = `Venta de bono - ${monthName} ${this.bonusYear()}`;
 
-    // Crear el payload
-    const payload = {
-      invoice_number: invoiceNumber,
-      invoice_date: invoiceDate,
-      bonus_id: bonusId,
-      concept,
-    };
-
-    // Activar spinner
-    this.isGeneratingBulkInvoices.set(true);
-
-    // Llamar al servicio
-    this.billingService.generateBonusInvoice(payload).subscribe({
-      next: (response: any) => {
-        if (response?.success === false) {
-          this.toastService.showError(
-            response.message || 'Error al generar la factura del bono'
-          );
-        } else {
-          this.toastService.showSuccess('Factura de bono generada exitosamente');
-          // Limpiar selección
-          this.selectedBonusId.set(null);
-          // Recargar datos
-          this.loadKPIs();
-          this.loadBonusInvoices();
-          this.loadExistingBonusInvoices();
-          this.loadLastInvoiceNumber();
-        }
-        this.isGeneratingBulkInvoices.set(false);
-      },
-      error: () => {
-        this.toastService.showError('Error al generar la factura del bono');
-        this.isGeneratingBulkInvoices.set(false);
-      },
-    });
+    this.billingService
+      .generateBonusInvoice({
+        invoice_number: invoice.invoice_number,
+        invoice_date: invoice.invoice_date,
+        bonus_id: invoice.bonus_id,
+        concept,
+      })
+      .subscribe({
+        next: (response: any) => {
+          if (response?.success === false) {
+            this.errorMessage.set(
+              response.message || 'Error al generar la factura del bono'
+            );
+          } else {
+            this.toastService.showSuccess(
+              'Factura de bono generada exitosamente'
+            );
+            this.closeBonusModal();
+            // Limpiar selección
+            this.selectedBonusId.set(null);
+            // Recargar datos
+            this.loadKPIs();
+            this.loadBonusInvoices();
+            this.loadExistingBonusInvoices();
+            this.loadLastInvoiceNumber();
+          }
+          this.isGeneratingBulkInvoices.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Error al generar la factura del bono');
+          this.isGeneratingBulkInvoices.set(false);
+        },
+      });
   }
 
   /**

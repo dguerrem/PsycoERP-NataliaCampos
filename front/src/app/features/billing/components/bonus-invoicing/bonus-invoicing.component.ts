@@ -223,6 +223,11 @@ export class BonusInvoicingComponent {
   @Output() downloadInvoice = new EventEmitter<number>();
 
   /**
+   * Evento emitido cuando se solicita descarga masiva de facturas de bonos
+   */
+  @Output() downloadBulkInvoices = new EventEmitter<ExistingBonusInvoice[]>();
+
+  /**
    * Evento emitido cuando se activa el subtab de facturas existentes
    */
   @Output() existingSubTabActivated = new EventEmitter<void>();
@@ -235,6 +240,9 @@ export class BonusInvoicingComponent {
   existingPatientFilter = signal('');
   existingDniFilter = signal('');
   existingInvoiceNumberFilter = signal('');
+
+  // Estado de selección múltiple para facturas existentes
+  selectedExistingInvoices = signal<number[]>([]); // IDs de facturas seleccionadas
 
   /**
    * Bonos filtrados según los criterios de búsqueda
@@ -279,6 +287,20 @@ export class BonusInvoicingComponent {
       return matchesPatient && matchesDni && matchesInvoiceNumber;
     });
   });
+
+  /**
+   * Verifica si todas las facturas existentes están seleccionadas
+   */
+  allExistingSelected = computed(
+    () =>
+      this.filteredExistingBonusInvoices().length > 0 &&
+      this.selectedExistingInvoices().length === this.filteredExistingBonusInvoices().length
+  );
+
+  /**
+   * Número de facturas existentes seleccionadas
+   */
+  selectedExistingCount = computed(() => this.selectedExistingInvoices().length);
 
   /**
    * Maneja el cambio de mes en el filtro
@@ -345,6 +367,47 @@ export class BonusInvoicingComponent {
    */
   onDownloadInvoice(invoiceId: number): void {
     this.downloadInvoice.emit(invoiceId);
+  }
+
+  /**
+   * Alterna la selección de una factura existente
+   */
+  toggleExistingInvoiceSelection(invoiceId: number): void {
+    const current = this.selectedExistingInvoices();
+    if (current.includes(invoiceId)) {
+      this.selectedExistingInvoices.set(current.filter((id) => id !== invoiceId));
+    } else {
+      this.selectedExistingInvoices.set([...current, invoiceId]);
+    }
+  }
+
+  /**
+   * Selecciona o deselecciona todas las facturas existentes
+   */
+  selectAllExistingInvoices(): void {
+    if (this.allExistingSelected()) {
+      this.selectedExistingInvoices.set([]);
+    } else {
+      this.selectedExistingInvoices.set(
+        this.filteredExistingBonusInvoices().map((inv) => inv.id)
+      );
+    }
+  }
+
+  /**
+   * Solicita la descarga masiva de las facturas existentes seleccionadas
+   */
+  onDownloadBulkInvoices(): void {
+    const selected = this.selectedExistingInvoices();
+    if (selected.length === 0) {
+      return;
+    }
+
+    const selectedInvoicesData = this._existingBonusInvoices().filter((inv) =>
+      selected.includes(inv.id)
+    );
+
+    this.downloadBulkInvoices.emit(selectedInvoicesData);
   }
 
   /**

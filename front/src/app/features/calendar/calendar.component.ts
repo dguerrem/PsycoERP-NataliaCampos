@@ -932,11 +932,6 @@ export class CalendarComponent implements OnInit {
     let secondHalfOccupied = false;
 
     allSessionsForDate.forEach(sessionData => {
-      // Ignorar sesiones canceladas
-      if (this.isSessionCancelled(sessionData)) {
-        return;
-      }
-
       const startTime = sessionData.SessionDetailData.start_time;
       const endTime = sessionData.SessionDetailData.end_time;
 

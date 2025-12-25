@@ -727,124 +727,45 @@ export class CalendarComponent implements OnInit {
     }
 
     const layouts: SessionLayout[] = [];
-    const activeSessions = sessionsInSlot.filter(s => !this.isSessionCancelled(s));
-    const cancelledSessions = sessionsInSlot.filter(s => this.isSessionCancelled(s));
 
-    // Procesar sesiones activas
-    if (activeSessions.length > 0) {
-      // Agrupar sesiones activas que se solapan
-      const activeGroups = this.groupOverlappingSessions(activeSessions);
+    // Agrupar todas las sesiones (activas y canceladas) que se solapan
+    const groups = this.groupOverlappingSessions(sessionsInSlot);
 
-      activeGroups.forEach(group => {
-        if (group.length === 1) {
-          // Sesión individual sin solapamiento: ocupa todo el ancho
-          const session = group[0];
+    groups.forEach(group => {
+      if (group.length === 1) {
+        // Sesión individual sin solapamiento: ocupa todo el ancho
+        const session = group[0];
+        const position = this.calculateSessionPosition(session, hour);
+        const isCancelled = this.isSessionCancelled(session);
+        layouts.push({
+          sessionData: session,
+          slotHour: hour,
+          topPercent: position.topPercent,
+          heightPercent: position.heightPercent,
+          isCancelled: isCancelled,
+          leftPercent: 0,
+          widthPercent: 100,
+          zIndex: isCancelled ? 1 : 10
+        });
+      } else {
+        // Múltiples sesiones que se solapan: distribuir horizontalmente
+        const width = 100 / group.length;
+        group.forEach((session, index) => {
           const position = this.calculateSessionPosition(session, hour);
+          const isCancelled = this.isSessionCancelled(session);
           layouts.push({
             sessionData: session,
             slotHour: hour,
             topPercent: position.topPercent,
             heightPercent: position.heightPercent,
-            isCancelled: false,
-            leftPercent: 0,
-            widthPercent: 100,
-            zIndex: 10
+            isCancelled: isCancelled,
+            leftPercent: index * width,
+            widthPercent: width - 1.5,
+            zIndex: isCancelled ? 1 : 10
           });
-        } else {
-          // Múltiples sesiones que se solapan: distribuir horizontalmente
-          const width = 100 / group.length;
-          group.forEach((session, index) => {
-            const position = this.calculateSessionPosition(session, hour);
-            layouts.push({
-              sessionData: session,
-              slotHour: hour,
-              topPercent: position.topPercent,
-              heightPercent: position.heightPercent,
-              isCancelled: false,
-              leftPercent: index * width,
-              widthPercent: width - 1.5,
-              zIndex: 10
-            });
-          });
-        }
-      });
-    }
-
-    // Procesar sesiones canceladas
-    if (cancelledSessions.length > 0) {
-      // Si hay sesiones activas, las canceladas van en una fila inferior
-      if (activeSessions.length > 0) {
-        // Agrupar sesiones canceladas que se solapan
-        const cancelledGroups = this.groupOverlappingSessions(cancelledSessions);
-
-        cancelledGroups.forEach(group => {
-          if (group.length === 1) {
-            const session = group[0];
-            const position = this.calculateSessionPosition(session, hour);
-            layouts.push({
-              sessionData: session,
-              slotHour: hour,
-              topPercent: position.topPercent,
-              heightPercent: position.heightPercent,
-              isCancelled: true,
-              leftPercent: 0,
-              widthPercent: 100,
-              zIndex: 1
-            });
-          } else {
-            const width = 100 / group.length;
-            group.forEach((session, index) => {
-              const position = this.calculateSessionPosition(session, hour);
-              layouts.push({
-                sessionData: session,
-                slotHour: hour,
-                topPercent: position.topPercent,
-                heightPercent: position.heightPercent,
-                isCancelled: true,
-                leftPercent: index * width,
-                widthPercent: width - 1.5,
-                zIndex: 1
-              });
-            });
-          }
-        });
-      } else {
-        // Solo hay sesiones canceladas: aplicar misma lógica de agrupamiento
-        const cancelledGroups = this.groupOverlappingSessions(cancelledSessions);
-
-        cancelledGroups.forEach(group => {
-          if (group.length === 1) {
-            const session = group[0];
-            const position = this.calculateSessionPosition(session, hour);
-            layouts.push({
-              sessionData: session,
-              slotHour: hour,
-              topPercent: position.topPercent,
-              heightPercent: position.heightPercent,
-              isCancelled: true,
-              leftPercent: 0,
-              widthPercent: 100,
-              zIndex: 1
-            });
-          } else {
-            const width = 100 / group.length;
-            group.forEach((session, index) => {
-              const position = this.calculateSessionPosition(session, hour);
-              layouts.push({
-                sessionData: session,
-                slotHour: hour,
-                topPercent: position.topPercent,
-                heightPercent: position.heightPercent,
-                isCancelled: true,
-                leftPercent: index * width,
-                widthPercent: width - 1.5,
-                zIndex: 1
-              });
-            });
-          }
         });
       }
-    }
+    });
 
     return layouts;
   }

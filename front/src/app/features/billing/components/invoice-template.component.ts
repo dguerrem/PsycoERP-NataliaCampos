@@ -82,15 +82,28 @@ import { InvoicePreviewData } from './invoice-preview.component';
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
-                @for (session of invoiceData.sessions || []; track session.session_id; let isOdd = $odd) {
-                  <tr [class.bg-gray-50]="isOdd" [class.bg-white]="!isOdd">
-                    <td class="px-4 py-3 font-medium text-gray-900">Sesión @if (userData) {{{ userData.name }}}</td>
-                    <td class="px-4 py-3 text-gray-700">{{ formatDate(session.session_date) }}</td>
-                    <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(session.price) }}</td>
+                @if (invoiceData.isBonusInvoice) {
+                  <!-- Factura de bono: mostrar una sola línea -->
+                  <tr class="bg-white">
+                    <td class="px-4 py-3 font-medium text-gray-900">Bono de {{ invoiceData.pending_sessions_count }} {{ invoiceData.pending_sessions_count === 1 ? 'sesión' : 'sesiones' }}</td>
+                    <td class="px-4 py-3 text-gray-700">{{ formatDate(invoiceData.invoice_date) }}</td>
+                    <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(invoiceData.total_gross) }}</td>
                     <td class="px-4 py-3 text-center text-gray-700">1</td>
                     <td class="px-4 py-3 text-right text-gray-700">0%</td>
-                    <td class="px-4 py-3 text-right font-medium text-gray-900">{{ formatCurrency(session.price) }}</td>
+                    <td class="px-4 py-3 text-right font-medium text-gray-900">{{ formatCurrency(invoiceData.total_gross) }}</td>
                   </tr>
+                } @else {
+                  <!-- Factura normal: desglosar sesiones -->
+                  @for (session of invoiceData.sessions || []; track session.session_id; let isOdd = $odd) {
+                    <tr [class.bg-gray-50]="isOdd" [class.bg-white]="!isOdd">
+                      <td class="px-4 py-3 font-medium text-gray-900">Sesión @if (userData) {{{ userData.name }}}</td>
+                      <td class="px-4 py-3 text-gray-700">{{ formatDate(session.session_date) }}</td>
+                      <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(session.price) }}</td>
+                      <td class="px-4 py-3 text-center text-gray-700">1</td>
+                      <td class="px-4 py-3 text-right text-gray-700">0%</td>
+                      <td class="px-4 py-3 text-right font-medium text-gray-900">{{ formatCurrency(session.price) }}</td>
+                    </tr>
+                  }
                 }
               </tbody>
             </table>

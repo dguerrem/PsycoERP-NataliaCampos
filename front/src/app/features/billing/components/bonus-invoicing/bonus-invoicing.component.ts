@@ -86,6 +86,18 @@ export class BonusInvoicingComponent {
   }
 
   /**
+   * ID del bono seleccionado
+   */
+  private _selectedBonusId = signal<number | null>(null);
+  @Input({ required: true })
+  set selectedBonusId(value: number | null) {
+    this._selectedBonusId.set(value);
+  }
+  get selectedBonusId(): number | null {
+    return this._selectedBonusId();
+  }
+
+  /**
    * Prefijo para números de factura
    */
   @Input({ required: true }) invoicePrefix!: string;
@@ -111,9 +123,14 @@ export class BonusInvoicingComponent {
   @Output() yearChange = new EventEmitter<number>();
 
   /**
+   * Evento emitido cuando se selecciona un bono
+   */
+  @Output() bonusSelect = new EventEmitter<number>();
+
+  /**
    * Evento emitido cuando se solicita generar una factura de bono
    */
-  @Output() generateInvoice = new EventEmitter<number>();
+  @Output() generateInvoice = new EventEmitter<void>();
 
   /**
    * Evento emitido cuando se solicita vista previa de un bono pendiente
@@ -280,6 +297,13 @@ export class BonusInvoicingComponent {
   }
 
   /**
+   * Selecciona un bono
+   */
+  selectBonus(bonusId: number): void {
+    this.bonusSelect.emit(bonusId);
+  }
+
+  /**
    * Maneja el cambio de mes de facturas existentes
    */
   onExistingMonthChange(event: Event): void {
@@ -296,10 +320,10 @@ export class BonusInvoicingComponent {
   }
 
   /**
-   * Genera factura para un bono
+   * Genera factura del bono seleccionado
    */
-  onGenerateInvoice(bonusId: number): void {
-    this.generateInvoice.emit(bonusId);
+  onGenerateInvoice(): void {
+    this.generateInvoice.emit();
   }
 
   /**

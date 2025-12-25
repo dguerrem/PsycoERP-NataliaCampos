@@ -62,6 +62,21 @@
             <option [value]="year" [selected]="year === bonusYear">{{ year }}</option>
             }
           </select>
+
+          <div class="flex gap-2 ml-auto">
+            <button data-slot="button" (click)="onGenerateInvoice()" [disabled]="selectedBonusId === null"
+              class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 mr-2">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="M10 9H8"></path>
+                <path d="M16 13H8"></path>
+                <path d="M16 17H8"></path>
+              </svg>
+              Generar Factura
+            </button>
+          </div>
         </div>
 
         <!-- Card con inputs de numeración -->
@@ -132,6 +147,11 @@
                   <thead data-slot="table-header" class="[&_tr]:border-b sticky top-0 bg-background z-10 shadow-sm">
                     <tr data-slot="table-row" class="hover:bg-muted/50 border-b transition-colors">
                       <th data-slot="table-head"
+                        class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap w-12">
+                        <input type="checkbox" [checked]="false" disabled data-slot="checkbox"
+                          class="peer size-4 shrink-0 rounded-[4px] border shadow-xs cursor-not-allowed opacity-50">
+                      </th>
+                      <th data-slot="table-head"
                         class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap min-w-[150px]">
                         Paciente</th>
                       <th data-slot="table-head"
@@ -154,6 +174,7 @@
                         Acciones</th>
                     </tr>
                     <tr data-slot="table-row" class="border-b bg-muted/30">
+                      <th data-slot="table-head" class="h-10 px-2"></th>
                       <th data-slot="table-head" class="h-10 px-2">
                         <input type="text" placeholder="Filtrar..." [value]="bonusPatientFilter()"
                           (input)="bonusPatientFilter.set($any($event.target).value)" data-slot="input"
@@ -181,6 +202,11 @@
                   <tbody data-slot="table-body" class="[&_tr:last-child]:border-0">
                     @for (bonus of filteredBonusInvoices(); track bonus.bonus_id) {
                     <tr data-slot="table-row" class="hover:bg-muted/50 border-b transition-colors">
+                      <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
+                        <input type="checkbox" [checked]="selectedBonusId === bonus.bonus_id"
+                          (change)="selectBonus(bonus.bonus_id)" data-slot="checkbox"
+                          class="peer size-4 shrink-0 rounded-[4px] border shadow-xs cursor-pointer">
+                      </td>
                       <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap font-medium">{{
                         bonus.patient_full_name }}</td>
                       <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">{{ bonus.dni }}
@@ -198,38 +224,23 @@
                       <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap font-semibold">{{
                         formatCurrency(bonus.total_gross) }}</td>
                       <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
-                        <div class="flex gap-2">
-                          <button data-slot="button" type="button" (click)="onPreviewInvoice(bonus.bonus_id)"
-                            class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3"
-                            aria-label="Vista previa">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                              stroke-linejoin="round" class="h-4 w-4">
-                              <path
-                                d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0">
-                              </path>
-                              <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                          </button>
-                          <button data-slot="button" type="button" (click)="onGenerateInvoice(bonus.bonus_id)"
-                            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 py-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                              stroke-linejoin="round" class="h-4 w-4">
-                              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                              <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                              <path d="M10 9H8"></path>
-                              <path d="M16 13H8"></path>
-                              <path d="M16 17H8"></path>
-                            </svg>
-                            Generar
-                          </button>
-                        </div>
+                        <button data-slot="button" type="button" (click)="onPreviewInvoice(bonus.bonus_id)"
+                          class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3"
+                          aria-label="Vista previa">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="h-4 w-4">
+                            <path
+                              d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0">
+                            </path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                     } @empty {
                     <tr>
-                      <td colspan="7" class="text-center py-12 text-muted-foreground">
+                      <td colspan="8" class="text-center py-12 text-muted-foreground">
                         <div class="flex flex-col items-center gap-2">
                           <svg class="h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">

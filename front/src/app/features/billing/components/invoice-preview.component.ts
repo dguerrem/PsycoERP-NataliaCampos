@@ -15,6 +15,7 @@ export interface InvoicePreviewData {
   invoice_date: string;
   sessions?: { session_id: number; session_date: string; price: number; payment_method?: string; }[];
   progenitors_data?: ProgenitorsData;
+  isBonusInvoice?: boolean; // Flag para mostrar como una sola línea en lugar de desglosar sesiones
 }
 
 @Component({

@@ -134,6 +134,7 @@ export class BillingComponent implements OnInit {
   existingBonusInvoices = signal<ExistingBonusInvoice[]>([]);
   selectedPatients = signal<string[]>([]);
   selectedClinicId = signal<number | null>(null);
+  selectedBonusId = signal<number | null>(null);
 
   // Numeración de facturas
   invoicePrefix = signal('FAC');
@@ -589,6 +590,19 @@ export class BillingComponent implements OnInit {
     } else {
       // Seleccionar solo esta clínica
       this.selectedClinicId.set(clinicId);
+    }
+  }
+
+  /**
+   * Selecciona un bono (solo uno a la vez)
+   */
+  selectBonus(bonusId: number) {
+    if (this.selectedBonusId() === bonusId) {
+      // Si ya está seleccionado, deseleccionar
+      this.selectedBonusId.set(null);
+    } else {
+      // Seleccionar solo este bono
+      this.selectedBonusId.set(bonusId);
     }
   }
 
@@ -1334,6 +1348,8 @@ export class BillingComponent implements OnInit {
         next: (response) => {
           this.bonusInvoices.set(response.data.pending_invoices || []);
           this.isLoadingBonus.set(false);
+          // Limpiar selección al cambiar filtros
+          this.selectedBonusId.set(null);
         },
         error: (error) => {
           console.error('Error cargando bonos:', error);
@@ -1413,9 +1429,14 @@ export class BillingComponent implements OnInit {
   }
 
   /**
-   * Genera una factura para un bono
+   * Genera una factura para el bono seleccionado
    */
-  generateBonusInvoice(bonusId: number) {
+  generateBonusInvoice() {
+    const bonusId = this.selectedBonusId();
+    if (!bonusId) {
+      return;
+    }
+
     const bonus = this.bonusInvoices().find((b) => b.bonus_id === bonusId);
     if (!bonus) {
       this.toastService.showError('No se encontró el bono seleccionado');
@@ -1450,6 +1471,8 @@ export class BillingComponent implements OnInit {
           );
         } else {
           this.toastService.showSuccess('Factura de bono generada exitosamente');
+          // Limpiar selección
+          this.selectedBonusId.set(null);
           // Recargar datos
           this.loadKPIs();
           this.loadBonusInvoices();
@@ -1495,6 +1518,7 @@ export class BillingComponent implements OnInit {
       invoice_date: new Date().toISOString().split('T')[0],
       sessions,
       progenitors_data: bonus.progenitors_data,
+      isBonusInvoice: true, // Mostrar como una sola línea
     };
 
     this.previewInvoiceData.set(previewData);
@@ -1529,6 +1553,7 @@ export class BillingComponent implements OnInit {
       invoice_number: invoice.invoice_number,
       invoice_date: invoice.invoice_date,
       sessions,
+      isBonusInvoice: true, // Mostrar como una sola línea
     };
 
     this.previewInvoiceData.set(previewData);

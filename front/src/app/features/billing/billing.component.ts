@@ -1694,8 +1694,8 @@ export class BillingComponent implements OnInit {
       ? invoice.progenitors_data!.progenitor1.dni || ''
       : invoice.dni;
     const receiverContact = hasProgenitor
-      ? `Teléfono: ${invoice.progenitors_data!.progenitor1.phone || ''}`
-      : `Email: ${invoice.email}`;
+      ? `Teléfono: ${invoice.progenitors_data!.progenitor1.phone || 'N/A'}`
+      : `Email: ${invoice.email || 'N/A'}`;
 
     return `
       <div style="max-width: 800px; margin: 0 auto; background: white; padding: 32px; font-family: system-ui, -apple-system, sans-serif;">

@@ -61,7 +61,7 @@ import { InvoicePreviewData } from './invoice-preview.component';
               @if (hasProgenitorData()) {
                 <div>Teléfono: {{ getReceiverPhone() }}</div>
               } @else {
-                <div>Email: {{ invoiceData.email }}</div>
+                <div>Email: {{ invoiceData.email || 'N/A' }}</div>
               }
             </div>
           </div>

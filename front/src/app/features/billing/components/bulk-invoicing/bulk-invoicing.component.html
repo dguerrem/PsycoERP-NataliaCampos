@@ -212,7 +212,7 @@
                     invoice.patient_full_name }}</td>
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">{{ invoice.dni }}
                   </td>
-                  <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">{{ invoice.email }}
+                  <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">{{ invoice.email || 'N/A' }}
                   </td>
                   <td data-slot="table-cell" class="p-2 align-middle whitespace-nowrap">
                     <span data-slot="badge"

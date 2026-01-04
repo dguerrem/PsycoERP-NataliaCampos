@@ -96,6 +96,36 @@ export class FormInputComponent {
       return `El valor mínimo es ${errors['min'].min}`;
     }
 
+    // Custom validators for patient form
+    if (errors['invalidDniFormat']) {
+      return 'El DNI debe tener 8 dígitos seguidos de una letra (ej: 12345678A)';
+    }
+    if (errors['invalidDniLetter']) {
+      const error = errors['invalidDniLetter'];
+      return `La letra del DNI no es válida. Debería ser ${error.expected} en lugar de ${error.actual}`;
+    }
+    if (errors['invalidPhone']) {
+      return 'El teléfono debe tener exactamente 9 dígitos sin espacios (ej: 666123456)';
+    }
+    if (errors['invalidPhonePrefix']) {
+      return 'El teléfono debe comenzar con 6, 7, 8 o 9';
+    }
+    if (errors['futureBirthDate']) {
+      return 'La fecha de nacimiento no puede ser futura';
+    }
+    if (errors['tooOld']) {
+      const age = errors['tooOld'].age;
+      return `La edad no puede superar los 100 años (calculada: ${age} años)`;
+    }
+    if (errors['treatmentDateTooFarFuture']) {
+      const years = errors['treatmentDateTooFarFuture'].years;
+      return `La fecha de inicio de tratamiento no puede ser más de 100 años en el futuro (${years} años)`;
+    }
+    if (errors['treatmentDateTooFarPast']) {
+      const years = errors['treatmentDateTooFarPast'].years;
+      return `La fecha de inicio de tratamiento no puede ser más de 100 años en el pasado (${years} años)`;
+    }
+
     // Return first error key as fallback
     return Object.keys(errors)[0];
   }

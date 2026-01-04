@@ -512,6 +512,30 @@ export class CalendarComponent implements OnInit {
     return sessions.some((session) => !this.isSessionCancelled(session));
   }
 
+  /**
+   * Verifica si un slot está completamente ocupado solo por sesiones canceladas
+   */
+  isSlotFullyOccupiedByCancelledSessions(date: Date, hour: string): boolean {
+    const layouts = this.getSessionLayoutsForSlot(date, hour);
+
+    // Debe haber al menos una sesión
+    if (layouts.length === 0) {
+      return false;
+    }
+
+    // Todas las sesiones deben estar canceladas
+    const allCancelled = layouts.every(layout => layout.isCancelled);
+    if (!allCancelled) {
+      return false;
+    }
+
+    // El slot debe estar completamente ocupado (sin espacios disponibles)
+    const availableSlots = this.getAvailableTimeSlots(date, hour);
+    const fullyOccupied = !availableSlots.hasFirstHalf && !availableSlots.hasSecondHalf;
+
+    return fullyOccupied;
+  }
+
   hasActiveSessionInDate(date: Date): boolean {
     const sessions = this.getSessionDataForDate(date);
     return sessions.some((session) => !this.isSessionCancelled(session));

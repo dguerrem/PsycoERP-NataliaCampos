@@ -21,6 +21,12 @@ import { Clinic } from '../../../clinics/models/clinic.model';
 import { ClinicSelectorComponent } from '../../../../shared/components/clinic-selector';
 import { ReusableModalComponent } from '../../../../shared/components/reusable-modal/reusable-modal.component';
 import { FormInputComponent } from '../../../../shared/components/form-input/form-input.component';
+import {
+  dniValidator,
+  phoneValidator,
+  birthDateValidator,
+  treatmentDateValidator,
+} from '../../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-patient-form',
@@ -86,9 +92,9 @@ export class PatientFormComponent implements OnInit, OnChanges {
       first_name: ['', [Validators.required, Validators.minLength(2)]],
       last_name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.minLength(9)]],
-      dni: ['', [Validators.required, Validators.minLength(8)]],
-      birth_date: ['', [Validators.required]],
+      phone: ['', [Validators.required, phoneValidator()]],
+      dni: ['', [Validators.required, dniValidator()]],
+      birth_date: ['', [Validators.required, birthDateValidator()]],
       gender: ['', [Validators.required]],
       occupation: [''],
 
@@ -105,7 +111,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
 
       // Datos del tratamiento
       clinic_id: ['', [Validators.required]],
-      treatment_start_date: ['', [Validators.required]],
+      treatment_start_date: ['', [Validators.required, treatmentDateValidator()]],
       status: ['en curso', [Validators.required]],
       special_price: [0, [Validators.required, Validators.min(0)]],
 
@@ -201,10 +207,10 @@ export class PatientFormComponent implements OnInit, OnChanges {
     const progenitor1Phone = this.patientForm.get('progenitor1_phone');
 
     if (isMinor) {
-      // Progenitor 1 fields are required for minors
+      // Progenitor 1 fields are required for minors with custom validators
       progenitor1FullName?.setValidators([Validators.required, Validators.minLength(2)]);
-      progenitor1Dni?.setValidators([Validators.required, Validators.minLength(8)]);
-      progenitor1Phone?.setValidators([Validators.required, Validators.minLength(9)]);
+      progenitor1Dni?.setValidators([Validators.required, dniValidator()]);
+      progenitor1Phone?.setValidators([Validators.required, phoneValidator()]);
     } else {
       // Clear validators if not minor
       progenitor1FullName?.clearValidators();
@@ -287,6 +293,34 @@ export class PatientFormComponent implements OnInit, OnChanges {
       }
       if (field.errors?.['email']) {
         return 'Ingrese un email válido';
+      }
+      if (field.errors?.['invalidDniFormat']) {
+        return 'El DNI debe tener 8 dígitos seguidos de una letra (ej: 12345678A)';
+      }
+      if (field.errors?.['invalidDniLetter']) {
+        const error = field.errors['invalidDniLetter'];
+        return `La letra del DNI no es válida. Debería ser ${error.expected} en lugar de ${error.actual}`;
+      }
+      if (field.errors?.['invalidPhone']) {
+        return 'El teléfono debe tener exactamente 9 dígitos sin espacios (ej: 666123456)';
+      }
+      if (field.errors?.['invalidPhonePrefix']) {
+        return 'El teléfono debe comenzar con 6, 7, 8 o 9';
+      }
+      if (field.errors?.['futureBirthDate']) {
+        return 'La fecha de nacimiento no puede ser futura';
+      }
+      if (field.errors?.['tooOld']) {
+        const age = field.errors['tooOld'].age;
+        return `La edad no puede superar los 100 años (calculada: ${age} años)`;
+      }
+      if (field.errors?.['treatmentDateTooFarFuture']) {
+        const years = field.errors['treatmentDateTooFarFuture'].years;
+        return `La fecha de inicio de tratamiento no puede ser más de 100 años en el futuro (${years} años)`;
+      }
+      if (field.errors?.['treatmentDateTooFarPast']) {
+        const years = field.errors['treatmentDateTooFarPast'].years;
+        return `La fecha de inicio de tratamiento no puede ser más de 100 años en el pasado (${years} años)`;
       }
     }
     return null;

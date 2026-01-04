@@ -251,6 +251,26 @@ export class PatientFormComponent implements OnInit, OnChanges {
       // Ensure is_minor is always a boolean
       formData.is_minor = Boolean(formData.is_minor);
 
+      // Clean phone numbers and DNI: remove spaces, trim whitespace
+      if (formData.phone) {
+        formData.phone = formData.phone.toString().replace(/\s+/g, '').trim();
+      }
+      if (formData.dni) {
+        formData.dni = formData.dni.toString().replace(/\s+/g, '').trim().toUpperCase();
+      }
+      if (formData.progenitor1_phone) {
+        formData.progenitor1_phone = formData.progenitor1_phone.toString().replace(/\s+/g, '').trim();
+      }
+      if (formData.progenitor1_dni) {
+        formData.progenitor1_dni = formData.progenitor1_dni.toString().replace(/\s+/g, '').trim().toUpperCase();
+      }
+      if (formData.progenitor2_phone) {
+        formData.progenitor2_phone = formData.progenitor2_phone.toString().replace(/\s+/g, '').trim();
+      }
+      if (formData.progenitor2_dni) {
+        formData.progenitor2_dni = formData.progenitor2_dni.toString().replace(/\s+/g, '').trim().toUpperCase();
+      }
+
       // If not minor, remove progenitor fields from payload
       if (!formData.is_minor) {
         delete formData.progenitor1_full_name;

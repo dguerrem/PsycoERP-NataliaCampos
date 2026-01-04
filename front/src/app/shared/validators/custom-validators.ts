@@ -47,9 +47,15 @@ export function phoneValidator(): ValidatorFn {
       return null;
     }
 
-    // Eliminar espacios, guiones y el prefijo +34 si existe
-    const cleanPhone = value.toString()
-      .replace(/\s+/g, '')
+    const phoneStr = value.toString().trim();
+
+    // Verificar que no contenga espacios
+    if (/\s/.test(phoneStr)) {
+      return { phoneContainsSpaces: true };
+    }
+
+    // Eliminar guiones y el prefijo +34 si existe para validación
+    const cleanPhone = phoneStr
       .replace(/-/g, '')
       .replace(/^\+34/, '');
 

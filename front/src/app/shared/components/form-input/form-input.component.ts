@@ -104,6 +104,9 @@ export class FormInputComponent {
       const error = errors['invalidDniLetter'];
       return `La letra del DNI no es válida. Debería ser ${error.expected} en lugar de ${error.actual}`;
     }
+    if (errors['phoneContainsSpaces']) {
+      return 'El teléfono no puede contener espacios. Elimine los espacios';
+    }
     if (errors['invalidPhone']) {
       return 'El teléfono debe tener exactamente 9 dígitos sin espacios (ej: 666123456)';
     }

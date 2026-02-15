@@ -1285,7 +1285,7 @@ export class BillingComponent implements OnInit {
   private generateSessionRowsHTML(sessions: any[], userName: string): string {
     if (!sessions || sessions.length === 0) {
       return `<tr style="background-color: white;">
-        <td colspan="6" style="padding: 12px 16px; text-align: center; color: #6b7280;">Sin sesiones</td>
+        <td colspan="7" style="padding: 12px 16px; text-align: center; color: #6b7280;">Sin sesiones</td>
       </tr>`;
     }
 
@@ -1299,6 +1299,7 @@ export class BillingComponent implements OnInit {
         <td style="padding: 12px 16px; text-align: right; color: #374151;">${this.formatCurrency(session.price)}</td>
         <td style="padding: 12px 16px; text-align: center; color: #374151;">1</td>
         <td style="padding: 12px 16px; text-align: right; color: #374151;">0%</td>
+        <td style="padding: 12px 16px; color: #374151;">${this.formatPaymentMethodForHTML(session.payment_method)}</td>
         <td style="padding: 12px 16px; text-align: right; font-weight: 500; color: #111827;">${this.formatCurrency(session.price)}</td>
       </tr>`;
     }).join('');
@@ -1754,6 +1755,7 @@ export class BillingComponent implements OnInit {
                 <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Precio</th>
                 <th style="padding: 12px 16px; text-align: center; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Cantidad</th>
                 <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">IVA</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Método de pago</th>
                 <th style="padding: 12px 16px; text-align: right; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Total</th>
               </tr>
             </thead>
@@ -1783,14 +1785,6 @@ export class BillingComponent implements OnInit {
                   <span>${this.formatCurrency(invoice.total)}</span>
                 </div>
               </div>
-              ${paymentMethods ? `
-              <div style="border-top: 1px solid #d1d5db; padding-top: 12px; margin-top: 12px;">
-                <div style="display: flex; justify-content: space-between; color: #374151;">
-                  <span>Método de pago:</span>
-                  <span style="font-weight: 500;">${paymentMethods}</span>
-                </div>
-              </div>
-              ` : ''}
             </div>
           </div>
         </div>

@@ -78,6 +78,7 @@ import { InvoicePreviewData } from './invoice-preview.component';
                   <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Precio</th>
                   <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Cantidad</th>
                   <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">IVA</th>
+                  <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Método de pago</th>
                   <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Total</th>
                 </tr>
               </thead>
@@ -90,6 +91,7 @@ import { InvoicePreviewData } from './invoice-preview.component';
                     <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(invoiceData.total_gross) }}</td>
                     <td class="px-4 py-3 text-center text-gray-700">1</td>
                     <td class="px-4 py-3 text-right text-gray-700">0%</td>
+                    <td class="px-4 py-3 text-gray-700">-</td>
                     <td class="px-4 py-3 text-right font-medium text-gray-900">{{ formatCurrency(invoiceData.total_gross) }}</td>
                   </tr>
                 } @else {
@@ -101,6 +103,7 @@ import { InvoicePreviewData } from './invoice-preview.component';
                       <td class="px-4 py-3 text-right text-gray-700">{{ formatCurrency(session.price) }}</td>
                       <td class="px-4 py-3 text-center text-gray-700">1</td>
                       <td class="px-4 py-3 text-right text-gray-700">0%</td>
+                      <td class="px-4 py-3 text-gray-700">{{ formatPaymentMethod(session.payment_method) }}</td>
                       <td class="px-4 py-3 text-right font-medium text-gray-900">{{ formatCurrency(session.price) }}</td>
                     </tr>
                   }
@@ -129,14 +132,6 @@ import { InvoicePreviewData } from './invoice-preview.component';
                     <span>{{ formatCurrency(invoiceData.total_gross) }}</span>
                   </div>
                 </div>
-                @if (getPaymentMethods()) {
-                  <div class="border-t border-gray-300 pt-3 mt-3">
-                    <div class="flex justify-between text-gray-700">
-                      <span>Método de pago:</span>
-                      <span class="font-medium">{{ getPaymentMethods() }}</span>
-                    </div>
-                  </div>
-                }
               </div>
             </div>
           </div>

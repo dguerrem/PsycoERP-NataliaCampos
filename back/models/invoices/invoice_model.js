@@ -166,7 +166,8 @@ const getPendingInvoices = async (db, filters = {}) => {
          JSON_OBJECT(
            'session_id', s.id,
            'session_date', DATE_FORMAT(s.session_date, '%Y-%m-%d'),
-           'price', s.price
+           'price', s.price,
+           'payment_method', s.payment_method
          ) ORDER BY s.session_date ASC
        ) as sessions
      FROM patients p
@@ -199,7 +200,8 @@ const getPendingInvoices = async (db, filters = {}) => {
       sessions: JSON.parse(row.sessions).map(session => ({
         session_id: parseInt(session.session_id),
         session_date: session.session_date,
-        price: parseFloat(session.price)
+        price: parseFloat(session.price),
+        payment_method: session.payment_method
       })),
       pending_sessions_count: parseInt(row.pending_sessions_count),
       total_gross: parseFloat(row.total_gross)
@@ -237,7 +239,8 @@ const getPendingInvoices = async (db, filters = {}) => {
          JSON_OBJECT(
            'session_id', s.id,
            'session_date', DATE_FORMAT(s.session_date, '%Y-%m-%d'),
-           'price', s.price
+           'price', s.price,
+           'payment_method', s.payment_method
          ) ORDER BY s.session_date ASC
        ) as sessions
      FROM sessions s
@@ -266,7 +269,8 @@ const getPendingInvoices = async (db, filters = {}) => {
     sessions: JSON.parse(row.sessions).map(session => ({
       session_id: parseInt(session.session_id),
       session_date: session.session_date,
-      price: parseFloat(session.price)
+      price: parseFloat(session.price),
+      payment_method: session.payment_method
     })),
     pending_sessions_count: parseInt(row.pending_sessions_count),
     total_gross: parseFloat(row.total_gross)
@@ -443,7 +447,8 @@ const getIssuedInvoices = async (db, filters = {}) => {
         `SELECT
            s.id as session_id,
            DATE_FORMAT(s.session_date, '%Y-%m-%d') as session_date,
-           s.price
+           s.price,
+           s.payment_method
          FROM invoice_sessions ist
          INNER JOIN sessions s ON ist.session_id = s.id AND s.is_active = true
          WHERE ist.invoice_id = ?
@@ -468,7 +473,8 @@ const getIssuedInvoices = async (db, filters = {}) => {
         sessions: sessionsDetails.map(session => ({
           session_id: parseInt(session.session_id),
           session_date: session.session_date,
-          price: parseFloat(session.price)
+          price: parseFloat(session.price),
+          payment_method: session.payment_method
         })),
         sessions_count: sessionsDetails.length,
         total: parseFloat(row.total) || 0,
@@ -504,6 +510,7 @@ const getIssuedInvoices = async (db, filters = {}) => {
            s.id as session_id,
            DATE_FORMAT(s.session_date, '%Y-%m-%d') as session_date,
            s.price,
+           s.payment_method,
            s.call_first_name,
            s.call_last_name,
            s.call_dni,
@@ -538,7 +545,8 @@ const getIssuedInvoices = async (db, filters = {}) => {
         sessions: sessionsDetails.map(session => ({
           session_id: parseInt(session.session_id),
           session_date: session.session_date,
-          price: parseFloat(session.price)
+          price: parseFloat(session.price),
+          payment_method: session.payment_method
         })),
         sessions_count: sessionsDetails.length,
         total: parseFloat(row.total) || 0,

@@ -315,7 +315,7 @@ export class PatientFormComponent implements OnInit, OnChanges {
         return 'Ingrese un email válido';
       }
       if (field.errors?.['invalidDniFormat']) {
-        return 'El DNI debe tener 8 dígitos seguidos de una letra (ej: 12345678A)';
+        return 'Formato no válido. DNI: 8 dígitos + letra (ej: 12345678A). NIE: X/Y/Z + 7 dígitos + letra (ej: X1234567L)';
       }
       if (field.errors?.['invalidDniLetter']) {
         const error = field.errors['invalidDniLetter'];

@@ -1,8 +1,9 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
- * Validador para DNI español
- * Verifica formato (8 dígitos + letra) y letra de control válida
+ * Validador para DNI/NIE español
+ * DNI: 8 dígitos + letra de control
+ * NIE: X/Y/Z + 7 dígitos + letra de control
  */
 export function dniValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -15,15 +16,23 @@ export function dniValidator(): ValidatorFn {
     // Limpiar espacios y convertir a mayúsculas
     const dni = value.toString().trim().toUpperCase();
 
-    // Verificar formato: 8 dígitos + 1 letra
+    // Verificar formato: DNI (8 dígitos + letra) o NIE (X/Y/Z + 7 dígitos + letra)
     const dniRegex = /^[0-9]{8}[A-Z]$/;
-    if (!dniRegex.test(dni)) {
+    const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/;
+
+    if (!dniRegex.test(dni) && !nieRegex.test(dni)) {
       return { invalidDniFormat: true };
     }
 
+    // Para NIE, sustituir X=0, Y=1, Z=2 y calcular como DNI
+    let numberStr = dni.substring(0, 8);
+    if (dni.charAt(0) === 'X') numberStr = '0' + dni.substring(1, 8);
+    else if (dni.charAt(0) === 'Y') numberStr = '1' + dni.substring(1, 8);
+    else if (dni.charAt(0) === 'Z') numberStr = '2' + dni.substring(1, 8);
+
     // Verificar letra de control
     const letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
-    const number = parseInt(dni.substring(0, 8), 10);
+    const number = parseInt(numberStr, 10);
     const letter = dni.charAt(8);
     const expectedLetter = letters.charAt(number % 23);
 
